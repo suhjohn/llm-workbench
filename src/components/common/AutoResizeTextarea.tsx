@@ -11,12 +11,6 @@ export interface TextareaProps
 
 const AutoResizeTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, maxRows, minRows, style, ...props }, ref) => {
-    // Prepare combined styles
-    const combinedStyles = { ...style };
-    if (combinedStyles.height !== undefined) {
-      combinedStyles.height = Number(combinedStyles.height);
-    }
-
     return (
       <TextareaAutosize
         className={cn(
@@ -43,7 +37,6 @@ const AutoResizeTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           ],
           className
         )}
-        style={combinedStyles}
         ref={ref}
         maxRows={maxRows}
         minRows={minRows}
