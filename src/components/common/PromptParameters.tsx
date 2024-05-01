@@ -8,6 +8,9 @@ import {
 } from "@/types/resource";
 import { json } from "@codemirror/lang-json";
 
+import { useModels } from "@/hooks/useModels";
+import { useResources } from "@/hooks/useResources";
+import { ChatMessage } from "@/types/chat";
 import { PlusIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { FC } from "react";
@@ -15,10 +18,18 @@ import { z } from "zod";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
 import { ClickableInput } from "./ClickableInput";
 import { CodeMirrorWithError } from "./CodeMirrorWithError";
+import { PromptInput } from "./PromptInput";
 import { PromptParametersToolChoice } from "./PromptParametersToolChoice";
 import { AutoResizeTextareaWithError } from "./TextareaWithError";
 
@@ -26,13 +37,16 @@ type PromptParametersProps = {
   resourceId: string;
   parameters: z.infer<typeof LLMRequestBodySchema>;
   setParameters: (parameters: object) => void;
-  enabledParameters: string[];
-  setEnabledParameters: (enabledParameters: string[]) => void;
+  enabledParameters: (keyof z.infer<typeof LLMRequestBodySchema>)[];
+  setEnabledParameters: (
+    enabledParameters: (keyof z.infer<typeof LLMRequestBodySchema>)[]
+  ) => void;
 };
 
 const resourceIdToSchema = {
   [OpenAIChatCompletionResource.id]: OpenAIChatCompletionRequestBodySchema,
 };
+
 const resourceIdToRenderSchema = {
   [OpenAIChatCompletionResource.id]: OpenAIChatCompletionRenderSchema,
 };
@@ -44,6 +58,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
   enabledParameters,
   setEnabledParameters,
 }) => {
+  const { data: resources } = useResources();
+  const { data: models } = useModels();
   const { resolvedTheme } = useTheme();
   const resourceSchema = resourceIdToSchema[resourceId];
   const resourceRenderSchema = resourceIdToRenderSchema[resourceId];
@@ -80,10 +96,28 @@ export const PromptParameters: FC<PromptParametersProps> = ({
       setEnabledParameters(enabledParameters.filter((k) => k !== key));
     }
   };
+  const selectedResource = resources.find((r) => r.id === resourceId);
+  const allKeys = Object.keys(resourceSchema.shape);
+  const keys = Object.keys(resourceSchema.shape)
+    .sort()
+    .filter((key) => key !== "messages" && key !== "prompt" && key !== "model");
+  if (allKeys.includes("messages")) {
+    keys.splice(0, 0, "messages");
+  }
+  if (allKeys.includes("prompt")) {
+    keys.splice(0, 0, "prompt");
+  }
+  if (allKeys.includes("model")) {
+    keys.splice(0, 0, "model");
+  }
+  const providerModels = models.filter(
+    (model) => model.providerId === selectedResource?.providerId
+  );
   return (
     <div className="space-y-4">
-      {Object.entries(resourceRenderSchema).map(([key, definition]) => {
+      {keys.map((key) => {
         const typedKey = key as keyof z.infer<typeof LLMRequestBodySchema>;
+        const definition = resourceRenderSchema[typedKey];
         const parsedDefinition = RenderSchema.parse(definition);
         const keySchema =
           resourceSchema.shape[key as keyof typeof resourceSchema.shape];
@@ -91,10 +125,11 @@ export const PromptParameters: FC<PromptParametersProps> = ({
           throw new Error(`No schema found for key ${key}`);
         }
         const defaultValue = parsedDefinition.default;
-        const checked = enabledParameters.includes(key);
+        const checked = enabledParameters.includes(typedKey);
         const value = parameters[typedKey] ?? defaultValue;
         return (
           <div className="flex space-x-4 flex-col" key={key}>
+            {/** First row of a parameter */}
             <div className="flex space-x-4 items-center">
               <Checkbox
                 checked={checked}
@@ -131,7 +166,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                         onBlur={(value) => {
                           setParameters({
                             ...parameters,
-                            [key]: value,
+                            [key]: keySchema.parse(value),
                           });
                         }}
                       />
@@ -271,8 +306,35 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     </Button>
                   </div>
                 )}
+                {parsedDefinition.type === "messages" && (
+                  <div>
+                    <Button
+                      onClick={() => {
+                        handleCheckboxChange(typedKey, !checked);
+                      }}
+                      variant="unstyled"
+                      className="p-0"
+                    >
+                      {key}
+                    </Button>
+                  </div>
+                )}
+                {parsedDefinition.type === "model" && (
+                  <div>
+                    <Button
+                      onClick={() => {
+                        handleCheckboxChange(typedKey, !checked);
+                      }}
+                      variant="unstyled"
+                      className="p-0"
+                    >
+                      {key}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
+            {/** Second row of a parameter */}
             <div
               className={cn("w-auto space-y-2 flex", !checked && "opacity-50")}
             >
@@ -331,14 +393,17 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     return value;
                   }}
                   onChange={(value) => {
-                    const parsedValue = JSON.parse(value);
                     setParameters({
                       ...parameters,
-                      [key]: parsedValue,
+                      [key]: value,
                     });
                   }}
                   theme={resolvedTheme === "dark" ? "dark" : "light"}
-                  value={JSON.stringify(value, null, 2)}
+                  value={
+                    typeof value === "string"
+                      ? value
+                      : JSON.stringify(value, null, 2)
+                  }
                   extensions={[json()]}
                 />
               )}
@@ -396,10 +461,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
               {parsedDefinition.type === "tool_choice" &&
                 (typeof value === "string" || typeof value === "object") && (
                   <PromptParametersToolChoice
-                    typedKey={typedKey}
                     value={value}
                     checked={checked}
-                    handleCheckboxChange={handleCheckboxChange}
                     onChange={(toggleType, value) => {
                       if (toggleType === "string") {
                         setParameters({
@@ -416,6 +479,41 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     }}
                   />
                 )}
+              {parsedDefinition.type === "messages" && (
+                <PromptInput
+                  chatPromptProps={{
+                    value: (value as ChatMessage[] | undefined) ?? [],
+                    onChange: (value) => {
+                      setParameters({
+                        ...parameters,
+                        [key]: value,
+                      });
+                    },
+                  }}
+                />
+              )}
+              {parsedDefinition.type === "model" && (
+                <Select
+                  value={value as string}
+                  onValueChange={(value) => {
+                    setParameters({
+                      ...parameters,
+                      [key]: value,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providerModels.map((model) => (
+                      <SelectItem key={model.name} value={model.name}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         );

@@ -8,6 +8,7 @@ export const OpenAIChatCompletionToolChoiceEnumSchema = z.enum([
   "auto",
   "required",
 ]);
+
 export const OpenAIChatCompletionToolChoiceObjectSchema = z.object({
   type: z.literal("function"),
   function: z.object({
@@ -16,6 +17,13 @@ export const OpenAIChatCompletionToolChoiceObjectSchema = z.object({
 });
 
 export const OpenAIChatCompletionRequestBodySchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(["user", "system"]),
+      content: z.string(),
+    })
+  ).nullish(),
+  model: z.string().nullish(),
   frequency_penalty: z.coerce.number().min(-2).max(2).nullish(),
   logit_bias: z
     .record(
@@ -96,6 +104,21 @@ export const ToolRenderSchema = z.object({
   default: z.array(z.any()),
 });
 
+export const MessagesRenderSchema = z.object({
+  type: z.literal("messages"),
+  default: z.array(
+    z.object({
+      role: z.enum(["user", "system"]),
+      content: z.string(),
+    })
+  ),
+});
+
+export const ModelRenderSchema = z.object({
+  type: z.literal("model"),
+  default: z.string(),
+});
+
 export const RenderSchema = z.discriminatedUnion("type", [
   SliderRenderSchema,
   TextareaRenderSchema,
@@ -104,12 +127,22 @@ export const RenderSchema = z.discriminatedUnion("type", [
   JSONRenderSchema,
   ToolChoiceRenderSchema,
   ToolRenderSchema,
+  MessagesRenderSchema,
+  ModelRenderSchema,
 ]);
 
 export const OpenAIChatCompletionRenderSchema: Record<
   keyof z.infer<typeof OpenAIChatCompletionRequestBodySchema>,
   z.infer<typeof RenderSchema>
 > = {
+  messages: {
+    type: "messages",
+    default: [],
+  },
+  model: {
+    type: "model",
+    default: "",
+  },
   frequency_penalty: {
     type: "slider",
     min: -2,
@@ -182,6 +215,13 @@ export const OpenAIChatCompletionRenderSchema: Record<
 };
 
 export const OpenRouterChatCompletionRequestBodySchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(["user", "system", "assistant"]),
+      content: z.string(),
+    })
+  ),
+  prompt: z.string().nullish(),
   temperature: z.coerce.number().min(0).max(2).nullish(),
   top_p: z.coerce.number().min(0).max(1).nullish(),
   topK: z.coerce.number().nullish(),
@@ -202,6 +242,12 @@ export const OpenRouterChatCompletionRequestBodySchema = z.object({
 });
 
 export const TogetherChatCompletionRequestBodySchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(["user", "system", "assistant"]),
+      content: z.string(),
+    })
+  ),
   max_tokens: z.number().nullish(),
   stop: z.array(z.string()).nullish(),
   temperature: z.number().min(0).max(2).nullish(),

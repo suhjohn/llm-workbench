@@ -3,7 +3,7 @@ import { ClassValue } from "clsx";
 import { FC, HTMLInputTypeAttribute, useEffect, useState } from "react";
 import { ZodError } from "zod";
 
-export type ClickableInput = {
+export type ClickableInputProps = {
   value: string;
   parse: (value: string) => string;
   placeholder?: string;
@@ -17,7 +17,7 @@ export type ClickableInput = {
   buttonClassName?: ClassValue[] | ClassValue;
 };
 
-export const ClickableInput: FC<ClickableInput> = ({
+export const ClickableInput: FC<ClickableInputProps> = ({
   value,
   parse,
   placeholder,
@@ -41,7 +41,6 @@ export const ClickableInput: FC<ClickableInput> = ({
     onBlur?.(inputText);
   };
   const isEmpty = inputText === "";
-  
   return (
     <div className={cn(["flex", "flex-col", rootClassName])}>
       <label

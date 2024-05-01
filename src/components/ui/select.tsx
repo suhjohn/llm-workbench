@@ -34,12 +34,14 @@ const SelectTrigger = React.forwardRef<
       "ring-offset-background",
       "placeholder:text-muted-foreground",
       "focus:outline-none",
-      "focus:ring-2",
+      "focus:ring-1",
       "focus:ring-ring",
       "focus:ring-offset-2",
+      "focus:ring-blue-500",
       "disabled:cursor-not-allowed",
       "disabled:opacity-50",
       "[&>span]:line-clamp-1",
+      "space-x-2",
       className
     )}
     {...props}
@@ -176,6 +178,5 @@ export {
   SelectScrollUpButton,
   SelectSeparator,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 };
-

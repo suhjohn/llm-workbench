@@ -16,6 +16,7 @@ export const OpenAIChatCompletionResource = {
   completionType: CompletionType.Chat,
   providerId: OpenAIProvider.id,
   path: "https://api.openai.com/v1/chat/completions",
+  docPath: "https://platform.openai.com/docs/api-reference/chat/create",
 };
 
 export const AnthropicChatCompletionResource = {

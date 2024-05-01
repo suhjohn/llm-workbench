@@ -43,10 +43,13 @@ const ChatPromptInput: FC<PromptInputProps> = ({ chatPromptProps }) => {
     if (lastRole === "user") {
       return "assistant";
     }
+    if (lastRole === "assistant") {
+      return "user";
+    }
     return "system";
   }
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-4 w-full">
       {chatPromptProps?.value.map((message, index) => (
         <div key={index} className="space-y-2">
           <div className="flex justify-between">

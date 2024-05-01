@@ -1,11 +1,7 @@
-import {
-  LLMRequestBodySchema,
-  OpenAIChatCompletionToolChoiceObjectSchema,
-} from "@/types/resource";
+import { OpenAIChatCompletionToolChoiceObjectSchema } from "@/types/resource";
 import { json } from "@codemirror/lang-json";
 import { useTheme } from "next-themes";
 import { FC, useState } from "react";
-import { z } from "zod";
 import {
   Select,
   SelectContent,
@@ -17,20 +13,14 @@ import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import { CodeMirrorWithError } from "./CodeMirrorWithError";
 
 type PromptParametersToolChoiceProps = {
-  typedKey: keyof z.infer<typeof LLMRequestBodySchema>;
   value: string | object;
   checked: boolean;
-  handleCheckboxChange: (
-    key: keyof z.infer<typeof LLMRequestBodySchema>,
-    checked: boolean,
-    defaultValue: string | object
-  ) => void;
   onChange: (toggleType: "string" | "object", value: string) => void;
 };
 
 export const PromptParametersToolChoice: FC<
   PromptParametersToolChoiceProps
-> = ({ typedKey, value, checked, handleCheckboxChange, onChange }) => {
+> = ({ value, checked, onChange }) => {
   const { resolvedTheme } = useTheme();
   const [toggleType, setToggleType] = useState<"string" | "object">("string");
 
@@ -40,19 +30,15 @@ export const PromptParametersToolChoice: FC<
         type="single"
         value={toggleType}
         onValueChange={(newToggleType) => {
+          if (newToggleType === toggleType) return;
+          if (newToggleType === "") return;
           if (newToggleType === "string") {
             onChange(newToggleType, "auto");
-            if (!checked) handleCheckboxChange(typedKey, true, "auto");
           } else {
             onChange(
               newToggleType as typeof toggleType,
               `{ "type": "function", "function": { "name": "" } }`
             );
-            if (!checked)
-              handleCheckboxChange(typedKey, true, {
-                type: "function",
-                function: { name: "" },
-              });
           }
           setToggleType(newToggleType as typeof toggleType);
         }}
