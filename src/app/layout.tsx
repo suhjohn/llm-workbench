@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import { ReactQueryProvider } from "./reactQueryProvider";
 
+import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 import { cookies } from "next/headers";
 import "./globals.css";
@@ -18,7 +19,10 @@ export default function RootLayout({
     <html lang="en" className={theme} suppressHydrationWarning>
       <body className={inter.className}>
         <ReactQueryProvider>
-          <ThemeProvider attribute="class">{children}</ThemeProvider>
+          <ThemeProvider attribute="class">
+            <main>{children}</main>
+            <Toaster />
+          </ThemeProvider>
         </ReactQueryProvider>
       </body>
     </html>

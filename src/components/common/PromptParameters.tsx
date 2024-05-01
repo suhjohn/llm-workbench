@@ -1,10 +1,10 @@
 import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 import { cn } from "@/lib/utils";
 import {
-  LLMRequestBodySchema,
+  LLMRequestBodySchemaType,
   OpenAIChatCompletionRenderSchema,
   OpenAIChatCompletionRequestBodySchema,
-  RenderSchema,
+  RenderSchema
 } from "@/types/resource";
 import { json } from "@codemirror/lang-json";
 
@@ -14,7 +14,6 @@ import { ChatMessage } from "@/types/chat";
 import { PlusIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { FC } from "react";
-import { z } from "zod";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
@@ -35,11 +34,11 @@ import { AutoResizeTextareaWithError } from "./TextareaWithError";
 
 type PromptParametersProps = {
   resourceId: string;
-  parameters: z.infer<typeof LLMRequestBodySchema>;
+  parameters: LLMRequestBodySchemaType;
   setParameters: (parameters: object) => void;
-  enabledParameters: (keyof z.infer<typeof LLMRequestBodySchema>)[];
+  enabledParameters: (keyof LLMRequestBodySchemaType)[];
   setEnabledParameters: (
-    enabledParameters: (keyof z.infer<typeof LLMRequestBodySchema>)[]
+    enabledParameters: (keyof LLMRequestBodySchemaType)[]
   ) => void;
 };
 
@@ -75,7 +74,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
     );
   }
   const handleCheckboxChange = (
-    key: keyof z.infer<typeof LLMRequestBodySchema>,
+    key: keyof LLMRequestBodySchemaType,
     checked: boolean,
     defaultValue?: any
   ) => {
@@ -116,7 +115,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
   return (
     <div className="space-y-4">
       {keys.map((key) => {
-        const typedKey = key as keyof z.infer<typeof LLMRequestBodySchema>;
+        const typedKey = key as keyof LLMRequestBodySchemaType;
         const definition = resourceRenderSchema[typedKey];
         const parsedDefinition = RenderSchema.parse(definition);
         const keySchema =
@@ -306,19 +305,6 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     </Button>
                   </div>
                 )}
-                {parsedDefinition.type === "messages" && (
-                  <div>
-                    <Button
-                      onClick={() => {
-                        handleCheckboxChange(typedKey, !checked);
-                      }}
-                      variant="unstyled"
-                      className="p-0"
-                    >
-                      {key}
-                    </Button>
-                  </div>
-                )}
                 {parsedDefinition.type === "model" && (
                   <div>
                     <Button
@@ -479,19 +465,6 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     }}
                   />
                 )}
-              {parsedDefinition.type === "messages" && (
-                <PromptInput
-                  chatPromptProps={{
-                    value: (value as ChatMessage[] | undefined) ?? [],
-                    onChange: (value) => {
-                      setParameters({
-                        ...parameters,
-                        [key]: value,
-                      });
-                    },
-                  }}
-                />
-              )}
               {parsedDefinition.type === "model" && (
                 <Select
                   value={value as string}

@@ -5,15 +5,18 @@ import { useCreateCompletion } from "@/hooks/useCreateCompletion";
 import { useResources } from "@/hooks/useResources";
 import { compile, getVariables } from "@/lib/parser";
 import { cn } from "@/lib/utils";
-import { LLMRequestBodySchema } from "@/types/resource";
+import { ChatMessage } from "@/types/chat";
+import { LLMRequestBodySchemaType } from "@/types/resource";
 import { json } from "@codemirror/lang-json";
+import { Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
-import { z } from "zod";
+import { useMemo, useState } from "react";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
+import { PromptInput } from "./common/PromptInput";
 import { PromptParameters } from "./common/PromptParameters";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
+import { Label } from "./ui/label";
 import {
   Select,
   SelectContent,
@@ -23,55 +26,99 @@ import {
 } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Textarea } from "./ui/textarea";
-import { Loader2 } from "lucide-react";
+import { useToast } from "./ui/use-toast";
 
 export default function HomePage() {
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
+  const { toast } = useToast();
+
   const [resourceId, setResourceId] = useState<string>(
     OpenAIChatCompletionResource.id
   );
-  const [llmParameters, setLlmParameters] = useState<
-    z.infer<typeof LLMRequestBodySchema>
-  >({});
+  const [llmParameters, setLlmParameters] = useState<LLMRequestBodySchemaType>(
+    {}
+  );
+  const [promptTemplate, setPromptTemplate] = useState<string>("");
+  const [messagesTemplate, setMessagesTemplate] = useState<ChatMessage[]>([
+    {
+      role: "system",
+      content: "You are a helpful assistant.",
+    },
+  ]);
+
   const [enabledParameters, setEnabledParameters] = useState<
-    (keyof z.infer<typeof LLMRequestBodySchema>)[]
+    (keyof LLMRequestBodySchemaType)[]
   >([]);
   const [promptParameters, setPromptParameters] = useState({});
-  const [parsedParameters, setParsedParameters] = useState({});
   const [output, setOutput] = useState<string>("");
   const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
-
   const selectedParameters = enabledParameters.reduce((acc, key) => {
     acc[key] = llmParameters[key];
     return acc;
   }, {} as Record<string, any>);
   const selectedResource = resources.find((r) => r.id === resourceId);
+  const completionType = selectedResource?.completionType;
 
-  const getVariablesFromParameters = (
-    parser: string,
-    parameters: z.infer<typeof LLMRequestBodySchema>
-  ) => {
-    if (parameters.messages !== undefined && parameters.messages !== null) {
+  const parsedParameters = useMemo(() => {
+    let params = enabledParameters.reduce((acc, key) => {
+      acc[key] = llmParameters[key];
+      return acc;
+    }, {} as Record<string, any>);
+    try {
+      const compiledOutput = compile({
+        parser: "mustache",
+        parameters: promptParameters,
+        messagesTemplate:
+          completionType === "chat" ? messagesTemplate : undefined,
+        promptTemplate:
+          completionType === "completion" ? promptTemplate : undefined,
+      });
+      params = {
+        ...params,
+        ...compiledOutput,
+      };
+    } catch (e) {
+      if (e instanceof Error) {
+        return {
+          value: null,
+          error: e.message,
+        };
+      }
+      throw e;
+    }
+    return {
+      value: params,
+      error: null,
+    };
+  }, [
+    enabledParameters,
+    llmParameters,
+    promptParameters,
+    messagesTemplate,
+    promptTemplate,
+    completionType,
+  ]);
+
+  const getVariablesFromParameters = (parser: string) => {
+    if (messagesTemplate !== undefined && messagesTemplate !== null) {
       const variables = new Set<string>();
-      parameters.messages?.forEach((message) => {
+      messagesTemplate?.forEach((message) => {
         getVariables(parser, message.content).forEach((variable) => {
           variables.add(variable);
         });
       });
       return Array.from(variables);
     }
-    if (parameters.prompt !== undefined && parameters.prompt !== null) {
-      return getVariables(parser, parameters.prompt);
+    if (promptTemplate !== undefined && promptTemplate !== null) {
+      return getVariables(parser, promptTemplate);
     }
     return [];
   };
 
-  const handleSetPromptParameters = (
-    parameters: z.infer<typeof LLMRequestBodySchema>
-  ) => {
-    setLlmParameters(parameters);
-    const newVariables = getVariablesFromParameters("mustache", parameters);
+  const handleSetPromptTemplate = (template: string) => {
+    setPromptTemplate(template);
+    const newVariables = getVariablesFromParameters("mustache");
     const newPromptParameters = newVariables.reduce((acc, variable) => {
       acc[variable] = "";
       return acc;
@@ -81,38 +128,48 @@ export default function HomePage() {
       ...promptParameters,
     };
     setPromptParameters(allNewPromptParameters);
-    let params = {
-      ...parameters,
+  };
+
+  const handleSetMessagesTemplate = (messages: ChatMessage[]) => {
+    setMessagesTemplate(messages);
+    const newVariables = getVariablesFromParameters("mustache");
+    const newPromptParameters = newVariables.reduce((acc, variable) => {
+      acc[variable] = "";
+      return acc;
+    }, {} as Record<string, any>);
+    const allNewPromptParameters = {
+      ...newPromptParameters,
+      ...promptParameters,
     };
-    try {
-      const compiledOutput = compile({
-        parser: "mustache",
-        parameters: allNewPromptParameters,
-        messagesTemplate: parameters.messages ?? undefined,
-        promptTemplate: parameters.prompt ?? undefined,
-      });
-      params = {
-        ...params,
-        ...compiledOutput,
-      };
-    } catch (e) {}
-    setParsedParameters(params);
+    setPromptParameters(allNewPromptParameters);
+  };
+
+  const handleSetPromptParameters = (parameters: LLMRequestBodySchemaType) => {
+    setLlmParameters(parameters);
   };
 
   const handleCreateCompletion = async () => {
+    if (parsedParameters.error !== null) {
+      toast({
+        title: "Error",
+        description: `Invalid Compiled Input: ${parsedParameters.error}`,
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       const response = await createCompletion({
         resourceId,
-        params: parsedParameters,
+        params: parsedParameters.value,
       });
-      console.log(response);
       setOutput(JSON.stringify(response, null, 2));
     } catch (e) {
       console.error(e);
     }
   };
+
   return (
-    <main>
+    <div>
       <TopNavigation />
       <div className={cn("grid grid-cols-1 gap-4", "p-4", "md:grid-cols-2")}>
         <div className="flex flex-col space-y-2">
@@ -136,14 +193,43 @@ export default function HomePage() {
             </SelectContent>
           </Select>
           <Card>
+            <CardHeader className="w-auto block">
+              {completionType === "completion" && (
+                <Label>Prompt Template</Label>
+              )}
+              {completionType === "chat" && <Label>Messages Template</Label>}
+            </CardHeader>
+            <CardContent>
+              <PromptInput
+                completionPromptProps={
+                  completionType === "completion"
+                    ? {
+                        value: promptTemplate,
+                        onChange: handleSetPromptTemplate,
+                      }
+                    : undefined
+                }
+                chatPromptProps={
+                  completionType === "chat"
+                    ? {
+                        value: messagesTemplate,
+                        onChange: handleSetMessagesTemplate,
+                      }
+                    : undefined
+                }
+              />
+            </CardContent>
+          </Card>
+          <Card>
             <Tabs defaultValue="ui">
               <CardHeader className="w-auto block">
+                <Label>Model Parameters</Label>
+              </CardHeader>
+              <CardContent>
                 <TabsList>
                   <TabsTrigger value="ui">UI</TabsTrigger>
                   <TabsTrigger value="json">JSON</TabsTrigger>
                 </TabsList>
-              </CardHeader>
-              <CardContent>
                 <TabsContent value="ui">
                   <PromptParameters
                     resourceId={resourceId}
@@ -168,52 +254,71 @@ export default function HomePage() {
           </Card>
         </div>
         <div className="flex flex-col space-y-4">
-          <div>
-            <div className="h-10 flex items-center">
-              <p className="font-semibold">Parameters</p>
-            </div>
-            <CodeMirrorWithError
-              className="w-full"
-              onChange={(value) => {
-                setPromptParameters(JSON.parse(value));
-              }}
-              theme={resolvedTheme === "dark" ? "dark" : "light"}
-              value={
-                JSON.stringify(promptParameters, null, 2) || JSON.stringify({})
-              }
-              extensions={[json()]}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <Label>Prompt Parameters</Label>
+            </CardHeader>
+            <CardContent>
+              <CodeMirrorWithError
+                className="w-full"
+                onChange={(value) => {
+                  setPromptParameters(JSON.parse(value));
+                }}
+                theme={resolvedTheme === "dark" ? "dark" : "light"}
+                value={
+                  JSON.stringify(promptParameters, null, 2) ||
+                  JSON.stringify({})
+                }
+                extensions={[json()]}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Label>Compiled Input</Label>
+            </CardHeader>
+            <CardContent className="space-y-2"> 
+              <Textarea
+                rows={10}
+                value={JSON.stringify(parsedParameters.value ?? {}, null, 2)}
+                readOnly={true}
+                className={cn("w-full", "bg-gray-100", "dark:bg-gray-900")}
+              />
+              {parsedParameters.error !== null && (
+                <p className="text-red-500 dark:text-red-400 text-xs">
+                  {parsedParameters.error}
+                </p>
+              )}
+            </CardContent>
+          </Card>
           <Button onClick={handleCreateCompletion} className="w-full">
             {isPending && <Loader2 className="animate-spin" />}
             {!isPending && <p>Run</p>}
           </Button>
-          <div>
-            <div className="h-10 flex items-center">
-              <p className="font-semibold">Input</p>
-            </div>
-            <Textarea
-              rows={15}
-              value={JSON.stringify(parsedParameters, null, 2)}
-              readOnly={true}
-              className="w-full"
-              placeholder="Output"
-            />
-          </div>
-          <div>
-            <div className="h-10 flex items-center">
-              <p className="font-semibold">Output</p>
-            </div>
-            <Textarea
-              rows={25}
-              value={output}
-              readOnly={true}
-              className="w-full"
-              placeholder="Output"
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <Label>Output</Label>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                rows={25}
+                value={output || "no output"}
+                readOnly={true}
+                className={cn(
+                  "w-full",
+                  "bg-gray-100",
+                  "dark:bg-gray-900",
+                  output === "" && [
+                    "text-gray-500",
+                    "dark:text-gray-400",
+                    "italic",
+                  ]
+                )}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

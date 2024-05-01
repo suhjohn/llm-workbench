@@ -30,7 +30,7 @@ export const compile = ({
   parameters,
 }: {
   parser: string;
-  messagesTemplate?: ChatMessage[]
+  messagesTemplate?: ChatMessage[];
   promptTemplate?: string;
   parameters: Record<string, any>;
 }) => {
@@ -55,8 +55,7 @@ export const compile = ({
         return { messages };
       }
     } catch (e) {
-      console.error(e);
-      return {};
+      throw e;
     }
   }
   throw new Error(`Unknown parser: ${parser}`);
