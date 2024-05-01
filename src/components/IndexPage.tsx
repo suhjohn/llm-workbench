@@ -23,6 +23,7 @@ import {
 } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Textarea } from "./ui/textarea";
+import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const { data: resources } = useResources();
@@ -37,8 +38,9 @@ export default function HomePage() {
     (keyof z.infer<typeof LLMRequestBodySchema>)[]
   >([]);
   const [promptParameters, setPromptParameters] = useState({});
+  const [parsedParameters, setParsedParameters] = useState({});
   const [output, setOutput] = useState<string>("");
-  const { mutateAsync: createCompletion } = useCreateCompletion();
+  const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
 
   const selectedParameters = enabledParameters.reduce((acc, key) => {
     acc[key] = llmParameters[key];
@@ -74,27 +76,34 @@ export default function HomePage() {
       acc[variable] = "";
       return acc;
     }, {} as Record<string, any>);
-    setPromptParameters({
+    const allNewPromptParameters = {
       ...newPromptParameters,
       ...promptParameters,
-    });
+    };
+    setPromptParameters(allNewPromptParameters);
+    let params = {
+      ...parameters,
+    };
+    try {
+      const compiledOutput = compile({
+        parser: "mustache",
+        parameters: allNewPromptParameters,
+        messagesTemplate: parameters.messages ?? undefined,
+        promptTemplate: parameters.prompt ?? undefined,
+      });
+      params = {
+        ...params,
+        ...compiledOutput,
+      };
+    } catch (e) {}
+    setParsedParameters(params);
   };
 
   const handleCreateCompletion = async () => {
-    const compiledOutput = compile({
-      parser: "mustache",
-      parameters: promptParameters,
-      messagesTemplate: llmParameters.messages ?? undefined,
-      promptTemplate: llmParameters.prompt ?? undefined,
-    });
-    const params = {
-      ...llmParameters,
-      ...compiledOutput,
-    };
     try {
       const response = await createCompletion({
         resourceId,
-        params,
+        params: parsedParameters,
       });
       console.log(response);
       setOutput(JSON.stringify(response, null, 2));
@@ -176,8 +185,21 @@ export default function HomePage() {
             />
           </div>
           <Button onClick={handleCreateCompletion} className="w-full">
-            <p>Run</p>
+            {isPending && <Loader2 className="animate-spin" />}
+            {!isPending && <p>Run</p>}
           </Button>
+          <div>
+            <div className="h-10 flex items-center">
+              <p className="font-semibold">Input</p>
+            </div>
+            <Textarea
+              rows={15}
+              value={JSON.stringify(parsedParameters, null, 2)}
+              readOnly={true}
+              className="w-full"
+              placeholder="Output"
+            />
+          </div>
           <div>
             <div className="h-10 flex items-center">
               <p className="font-semibold">Output</p>

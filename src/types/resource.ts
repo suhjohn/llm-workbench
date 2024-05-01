@@ -17,12 +17,14 @@ export const OpenAIChatCompletionToolChoiceObjectSchema = z.object({
 });
 
 export const OpenAIChatCompletionRequestBodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["user", "system"]),
-      content: z.string(),
-    })
-  ).nullish(),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "system", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .nullish(),
   model: z.string().nullish(),
   frequency_penalty: z.coerce.number().min(-2).max(2).nullish(),
   logit_bias: z
