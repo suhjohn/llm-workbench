@@ -42,6 +42,7 @@ const SelectTrigger = React.forwardRef<
       "disabled:opacity-50",
       "[&>span]:line-clamp-1",
       "space-x-2",
+      "hover:bg-accent hover:text-accent-foreground",
       className
     )}
     {...props}

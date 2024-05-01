@@ -1,4 +1,4 @@
-import { useKeys } from "@/hooks/useKeys";
+import { KEYS_LOCAL_STORAGE_KEY, useKeys } from "@/hooks/useKeys";
 import { useProviders } from "@/hooks/useProviders";
 import { localForageStore } from "@/lib/localforage";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export const APIKeysDialog = () => {
   const [saved, setSaved] = useState(false);
   const { data: localStorageKeys } = useKeys();
   const handleSetApiKeys = (apiKeys: { [x: string]: string }) => {
-    localForageStore.setItem("apiKeys", apiKeys);
+    localForageStore.setItem(KEYS_LOCAL_STORAGE_KEY, apiKeys);
     setApiKeys(apiKeys);
     setSaved(true);
   };

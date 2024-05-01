@@ -36,7 +36,8 @@ export const useCreateCompletion = () => {
         body: JSON.stringify(params),
       });
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        const responseText = await response.text();
+        throw new Error(`[${response.status}] ${responseText}`);
       }
       return response.json();
     },

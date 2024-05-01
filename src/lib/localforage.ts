@@ -4,5 +4,5 @@ export const localForageStore = localForage.createInstance({
   name: "PromptPlaygroundLocalStorageDB",
   version: 1.0,
   storeName: "PromptPlaygroundLocalStorage",
-  driver: [localForage.INDEXEDDB, localForage.LOCALSTORAGE],
+  driver: [localForage.INDEXEDDB],
 });

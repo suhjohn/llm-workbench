@@ -1,65 +1,66 @@
 "use client";
 import { TopNavigation } from "@/components/common/TopNavigation";
-import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 import { useCreateCompletion } from "@/hooks/useCreateCompletion";
 import { useResources } from "@/hooks/useResources";
-import { compile, getVariables } from "@/lib/parser";
+import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
+import { compile } from "@/lib/parser";
 import { cn } from "@/lib/utils";
-import { ChatMessage } from "@/types/chat";
-import { LLMRequestBodySchemaType } from "@/types/resource";
+import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { IndexTemplateSection } from "./IndexTemplateSection";
+import { TemplateList } from "./TemplateList";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
-import { PromptInput } from "./common/PromptInput";
-import { PromptParameters } from "./common/PromptParameters";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
+import { Card, CardContent, CardHeader } from "./ui/card";
 import { Label } from "./ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 
-export default function HomePage() {
+export default function IndexPage() {
+  const { data: templates, isLoading, refetch } = useTemplates();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedTemplateId = searchParams.get("templateId");
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
   const { toast } = useToast();
+  const [template, setTemplate] =
+    useState<PromptTemplateType>(DEFAULT_TEMPLATE);
+  useEffect(() => {
+    if (templates && selectedTemplateId) {
+      const selectedTemplate = templates[selectedTemplateId];
+      if (selectedTemplate) {
+        setTemplate(selectedTemplate);
+      }
+    }
+  }, [templates, selectedTemplateId]);
+  const {
+    resourceId,
+    llmParameters,
+    promptTemplate,
+    messagesTemplate,
+    enabledParameters,
+  } = template;
+  const { mutateAsync: updateTemplate } = useUpdateTemplate();
+  const handleUpdateTemplate = (newTemplate: PromptTemplateType) => {
+    setTemplate(newTemplate);
+    updateTemplate(newTemplate);
+    if (selectedTemplateId !== newTemplate.id)
+      router.push(`/?templateId=${newTemplate.id}`);
+  };
 
-  const [resourceId, setResourceId] = useState<string>(
-    OpenAIChatCompletionResource.id
-  );
-  const [llmParameters, setLlmParameters] = useState<LLMRequestBodySchemaType>(
-    {}
-  );
-  const [promptTemplate, setPromptTemplate] = useState<string>("");
-  const [messagesTemplate, setMessagesTemplate] = useState<ChatMessage[]>([
-    {
-      role: "system",
-      content: "You are a helpful assistant.",
-    },
-  ]);
-
-  const [enabledParameters, setEnabledParameters] = useState<
-    (keyof LLMRequestBodySchemaType)[]
-  >([]);
+  // Prompt Parameters
   const [promptParameters, setPromptParameters] = useState({});
   const [output, setOutput] = useState<string>("");
-  const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
-  const selectedParameters = enabledParameters.reduce((acc, key) => {
-    acc[key] = llmParameters[key];
-    return acc;
-  }, {} as Record<string, any>);
-  const selectedResource = resources.find((r) => r.id === resourceId);
-  const completionType = selectedResource?.completionType;
 
+  const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
+  const selectedResource = resources.find((r) => r.id === resourceId);
+
+  const completionType = selectedResource?.completionType;
   const parsedParameters = useMemo(() => {
     let params = enabledParameters.reduce((acc, key) => {
       acc[key] = llmParameters[key];
@@ -100,54 +101,6 @@ export default function HomePage() {
     completionType,
   ]);
 
-  const getVariablesFromParameters = (parser: string) => {
-    if (messagesTemplate !== undefined && messagesTemplate !== null) {
-      const variables = new Set<string>();
-      messagesTemplate?.forEach((message) => {
-        getVariables(parser, message.content).forEach((variable) => {
-          variables.add(variable);
-        });
-      });
-      return Array.from(variables);
-    }
-    if (promptTemplate !== undefined && promptTemplate !== null) {
-      return getVariables(parser, promptTemplate);
-    }
-    return [];
-  };
-
-  const handleSetPromptTemplate = (template: string) => {
-    setPromptTemplate(template);
-    const newVariables = getVariablesFromParameters("mustache");
-    const newPromptParameters = newVariables.reduce((acc, variable) => {
-      acc[variable] = "";
-      return acc;
-    }, {} as Record<string, any>);
-    const allNewPromptParameters = {
-      ...newPromptParameters,
-      ...promptParameters,
-    };
-    setPromptParameters(allNewPromptParameters);
-  };
-
-  const handleSetMessagesTemplate = (messages: ChatMessage[]) => {
-    setMessagesTemplate(messages);
-    const newVariables = getVariablesFromParameters("mustache");
-    const newPromptParameters = newVariables.reduce((acc, variable) => {
-      acc[variable] = "";
-      return acc;
-    }, {} as Record<string, any>);
-    const allNewPromptParameters = {
-      ...newPromptParameters,
-      ...promptParameters,
-    };
-    setPromptParameters(allNewPromptParameters);
-  };
-
-  const handleSetPromptParameters = (parameters: LLMRequestBodySchemaType) => {
-    setLlmParameters(parameters);
-  };
-
   const handleCreateCompletion = async () => {
     if (parsedParameters.error !== null) {
       toast({
@@ -164,96 +117,49 @@ export default function HomePage() {
       });
       setOutput(JSON.stringify(response, null, 2));
     } catch (e) {
-      console.error(e);
+      if (e instanceof Error)
+        toast({
+          title: "Error",
+          description: e.message,
+          variant: "destructive",
+        });
     }
   };
 
   return (
-    <div>
+    <div className={"flex relative flex-col space-y-0 h-[100dvh]"}>
       <TopNavigation />
-      <div className={cn("grid grid-cols-1 gap-4", "p-4", "md:grid-cols-2")}>
-        <div className="flex flex-col space-y-2">
-          <Select
-            value={resourceId}
-            onValueChange={(value) => {
-              setResourceId(value);
-            }}
-          >
-            <SelectTrigger className="w-64">
-              <SelectValue>
-                {selectedResource?.name || "Select a resource"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {resources.map((resource) => (
-                <SelectItem key={resource.id} value={resource.id}>
-                  {resource.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Card>
-            <CardHeader className="w-auto block">
-              {completionType === "completion" && (
-                <Label>Prompt Template</Label>
-              )}
-              {completionType === "chat" && <Label>Messages Template</Label>}
-            </CardHeader>
-            <CardContent>
-              <PromptInput
-                completionPromptProps={
-                  completionType === "completion"
-                    ? {
-                        value: promptTemplate,
-                        onChange: handleSetPromptTemplate,
-                      }
-                    : undefined
-                }
-                chatPromptProps={
-                  completionType === "chat"
-                    ? {
-                        value: messagesTemplate,
-                        onChange: handleSetMessagesTemplate,
-                      }
-                    : undefined
-                }
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <Tabs defaultValue="ui">
-              <CardHeader className="w-auto block">
-                <Label>Model Parameters</Label>
-              </CardHeader>
-              <CardContent>
-                <TabsList>
-                  <TabsTrigger value="ui">UI</TabsTrigger>
-                  <TabsTrigger value="json">JSON</TabsTrigger>
-                </TabsList>
-                <TabsContent value="ui">
-                  <PromptParameters
-                    resourceId={resourceId}
-                    parameters={llmParameters}
-                    setParameters={handleSetPromptParameters}
-                    enabledParameters={enabledParameters}
-                    setEnabledParameters={setEnabledParameters}
-                  />
-                </TabsContent>
-                <TabsContent value="json">
-                  <CodeMirrorWithError
-                    readOnly={true}
-                    className="w-full"
-                    theme={resolvedTheme === "dark" ? "dark" : "light"}
-                    value={JSON.stringify(selectedParameters, null, 2)}
-                    extensions={[json()]}
-                  />
-                </TabsContent>
-              </CardContent>
-            </Tabs>
-            <CardFooter />
-          </Card>
+      <div
+        className={cn(
+          "h-full",
+          "flex",
+          "gap-4",
+          "p-4",
+          "overflow-hidden",
+          "flex-col",
+          "lg:flex-row"
+        )}
+      >
+        <div
+          className={cn(
+            "w-full",
+            "h-auto",
+            "flex",
+            "space-x-2",
+            "overflow-hidden"
+          )}
+        >
+          <TemplateList />
+          <IndexTemplateSection
+            template={template}
+            setTemplate={handleUpdateTemplate}
+            promptParameters={promptParameters}
+            setPromptParameters={setPromptParameters}
+          />
         </div>
-        <div className="flex flex-col space-y-4">
+        <div
+          className={cn("w-full", "flex flex-col space-y-4", "overflow-auto")}
+        >
           <Card>
             <CardHeader>
               <Label>Prompt Parameters</Label>
@@ -277,7 +183,7 @@ export default function HomePage() {
             <CardHeader>
               <Label>Compiled Input</Label>
             </CardHeader>
-            <CardContent className="space-y-2"> 
+            <CardContent className="space-y-2">
               <Textarea
                 rows={10}
                 value={JSON.stringify(parsedParameters.value ?? {}, null, 2)}

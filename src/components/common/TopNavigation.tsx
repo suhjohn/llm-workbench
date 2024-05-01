@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { IoLogoGithub } from "react-icons/io";
+import { Button } from "../ui/button";
 import { APIKeysDialog } from "./APIKeysDialog";
 import { ThemeToggle } from "./ThemeToggle";
 
 export const TopNavigation = () => {
   return (
-    <header>
+    <header className={cn("sticky top-0", "bg-background", 'z-10')}>
       <div
         className={cn(
           "flex w-full",
@@ -20,6 +23,14 @@ export const TopNavigation = () => {
           <a href="/">PromptPlayground</a>
         </div>
         <div className="flex gap-2">
+          <Button variant={"ghost"} className="p-0 px-1.5 py-1.5 h-8" asChild>
+            <Link
+              href={"https://github.com/suhjohn/prompt-playground"}
+              target="_blank"
+            >
+              <IoLogoGithub size={20} />
+            </Link>
+          </Button>
           <APIKeysDialog />
           <ThemeToggle />
         </div>
