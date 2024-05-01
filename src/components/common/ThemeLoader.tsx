@@ -1,11 +1,9 @@
 import React from "react";
 
-import { Theme } from "@/types/theme";
-
 export interface ThemeLoaderProps
   extends React.ComponentPropsWithoutRef<"script"> {
   forceTheme?: boolean;
-  defaultTheme?: Theme;
+  defaultTheme?: string;
   localStorageKey?: string;
 }
 
@@ -32,18 +30,12 @@ export const getScript = ({
 
 const ThemeLoader: React.FC<ThemeLoaderProps> = ({
   forceTheme,
-  defaultTheme,
+  defaultTheme = "system",
   localStorageKey,
 }) => {
-  const _defaultTheme = [
-    Theme.Dark,
-    Theme.Light,
-    Theme.System,
-  ].includes(
-    defaultTheme as Theme
-  )
+  const _defaultTheme = ["dark", "light", "system"].includes(defaultTheme)
     ? defaultTheme
-    : Theme.Light;
+    : "system";
   return (
     <script
       id="theme-loader-script"
