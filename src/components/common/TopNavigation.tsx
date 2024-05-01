@@ -20,7 +20,7 @@ export const TopNavigation = () => {
         )}
       >
         <div className={cn("font-bold")}>
-          <a href="/">PromptPlayground</a>
+          <a href="/">PromptRepo</a>
         </div>
         <div className="flex gap-2">
           <Button variant={"ghost"} className="p-0 px-1.5 py-1.5 h-8" asChild>

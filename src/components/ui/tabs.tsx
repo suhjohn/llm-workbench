@@ -47,9 +47,9 @@ const TabsTrigger = React.forwardRef<
       "text-xs",
       "font-medium",
       "transition-all",
-      "focus-visible:outline-none",
-      "focus-visible:ring-1",
-      "focus-visible:ring-offset-2",
+      
+      
+      "focus-visible:outline-1",
       "disabled:pointer-events-none",
       "disabled:opacity-50",
       "data-[state=active]:bg-white",
@@ -74,9 +74,9 @@ const TabsContent = React.forwardRef<
     className={cn(
       "mt-2",
       "rounded-md",
-      "focus-visible:outline-none",
-      "focus-visible:ring-1",
-      "focus-visible:ring-offset-2",
+      
+      
+      "focus-visible:outline-1",
       "focus-visible:ring-offset-blue-500",
       className
     )}

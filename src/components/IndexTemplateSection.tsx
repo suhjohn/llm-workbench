@@ -3,7 +3,6 @@ import { useResources } from "@/hooks/useResources";
 import { getVariables } from "@/lib/parser";
 import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
-import { LLMRequestBodySchemaType } from "@/types/resource";
 import { json } from "@codemirror/lang-json";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -23,14 +22,14 @@ import {
 } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
-type IndexTemplateSectionProps = {
+type TemplateSection = {
   template: PromptTemplateType;
   setTemplate: (template: PromptTemplateType) => void;
   promptParameters: Record<string, any>;
   setPromptParameters: (parameters: Record<string, any>) => void;
 };
 
-export const IndexTemplateSection: FC<IndexTemplateSectionProps> = ({
+export const TemplateSection: FC<TemplateSection> = ({
   template: templateObj,
   setTemplate,
   promptParameters,
@@ -103,13 +102,6 @@ export const IndexTemplateSection: FC<IndexTemplateSectionProps> = ({
       ...promptParameters,
     };
     setPromptParameters(allNewPromptParameters);
-  };
-
-  const handleSetPromptParameters = (parameters: LLMRequestBodySchemaType) => {
-    setTemplate({
-      ...templateObj,
-      llmParameters: parameters,
-    });
   };
 
   return (
@@ -202,16 +194,8 @@ export const IndexTemplateSection: FC<IndexTemplateSectionProps> = ({
             </TabsList>
             <TabsContent value="ui">
               <PromptParameters
-                resourceId={resourceId}
-                parameters={llmParameters}
-                setParameters={handleSetPromptParameters}
-                enabledParameters={enabledParameters}
-                setEnabledParameters={(enabledParameters) => {
-                  setTemplate({
-                    ...templateObj,
-                    enabledParameters,
-                  });
-                }}
+                template={templateObj}
+                setTemplate={setTemplate}
               />
             </TabsContent>
             <TabsContent value="json">

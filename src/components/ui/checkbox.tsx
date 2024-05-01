@@ -22,9 +22,9 @@ const Checkbox = React.forwardRef<
       "border-gray-200",
       "border-gray-900",
       "ring-offset-white",
-      "focus-visible:outline-none",
-      "focus-visible:ring-1",
-      "focus-visible:ring-offset-2",
+      
+      
+      "focus-visible:outline-1",
       "disabled:cursor-not-allowed",
       "disabled:opacity-50",
       "data-[state=checked]:bg-gray-900",
@@ -34,7 +34,7 @@ const Checkbox = React.forwardRef<
       "dark:ring-offset-gray-950",
       "dark:data-[state=checked]:bg-gray-50",
       "dark:data-[state=checked]:text-gray-900",
-      "focus-visible:ring-blue-500",
+      "focus-visible:outline-blue-500",
       className
     )}
     {...props}

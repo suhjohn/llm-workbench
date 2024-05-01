@@ -18,11 +18,11 @@ const toggleVariants = cva(
     "transition-colors",
     "hover:bg-muted",
     "hover:text-muted-foreground",
-    "focus-visible:outline-none",
-    "focus-visible:ring-1",
-    "focus-visible:ring-ring",
-    "focus-visible:ring-offset-2",
-    "focus-visible:ring-blue-500",
+    
+    
+    
+    "focus-visible:outline-1",
+    "focus-visible:outline-blue-500",
     "disabled:pointer-events-none",
     "disabled:opacity-50",
     "data-[state=on]:bg-accent",

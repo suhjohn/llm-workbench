@@ -4,13 +4,13 @@ import {
   LLMRequestBodySchemaType,
   OpenAIChatCompletionRenderSchema,
   OpenAIChatCompletionRequestBodySchema,
-  RenderSchema
+  RenderSchema,
 } from "@/types/resource";
 import { json } from "@codemirror/lang-json";
 
 import { useModels } from "@/hooks/useModels";
 import { useResources } from "@/hooks/useResources";
-import { ChatMessage } from "@/types/chat";
+import { PromptTemplateType } from "@/types/prompt";
 import { PlusIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { FC } from "react";
@@ -28,18 +28,12 @@ import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
 import { ClickableInput } from "./ClickableInput";
 import { CodeMirrorWithError } from "./CodeMirrorWithError";
-import { PromptInput } from "./PromptInput";
 import { PromptParametersToolChoice } from "./PromptParametersToolChoice";
 import { AutoResizeTextareaWithError } from "./TextareaWithError";
 
 type PromptParametersProps = {
-  resourceId: string;
-  parameters: LLMRequestBodySchemaType;
-  setParameters: (parameters: object) => void;
-  enabledParameters: (keyof LLMRequestBodySchemaType)[];
-  setEnabledParameters: (
-    enabledParameters: (keyof LLMRequestBodySchemaType)[]
-  ) => void;
+  template: PromptTemplateType;
+  setTemplate: (template: PromptTemplateType) => void;
 };
 
 const resourceIdToSchema = {
@@ -51,12 +45,10 @@ const resourceIdToRenderSchema = {
 };
 
 export const PromptParameters: FC<PromptParametersProps> = ({
-  resourceId,
-  parameters,
-  setParameters,
-  enabledParameters,
-  setEnabledParameters,
+  template,
+  setTemplate,
 }) => {
+  const { llmParameters: parameters, enabledParameters, resourceId } = template;
   const { data: resources } = useResources();
   const { data: models } = useModels();
   const { resolvedTheme } = useTheme();
@@ -73,6 +65,13 @@ export const PromptParameters: FC<PromptParametersProps> = ({
       `Parameters length does not match definition length for resource ${resourceId}`
     );
   }
+  const setParameters = (parameters: object) => {
+    setTemplate({
+      ...template,
+      llmParameters: parameters,
+    });
+  };
+
   const handleCheckboxChange = (
     key: keyof LLMRequestBodySchemaType,
     checked: boolean,
@@ -86,13 +85,19 @@ export const PromptParameters: FC<PromptParametersProps> = ({
         defaultValue !== undefined
           ? defaultValue
           : resourceRenderSchema[key].default;
-      setEnabledParameters(dedupedEnabledParameters);
-      setParameters({
-        [key]: value,
-        ...parameters,
+      setTemplate({
+        ...template,
+        llmParameters: {
+          ...parameters,
+          [key]: value,
+        },
+        enabledParameters: dedupedEnabledParameters,
       });
     } else {
-      setEnabledParameters(enabledParameters.filter((k) => k !== key));
+      setTemplate({
+        ...template,
+        enabledParameters: enabledParameters.filter((k) => k !== key),
+      });
     }
   };
   const selectedResource = resources.find((r) => r.id === resourceId);
