@@ -2,6 +2,10 @@
 
 https://www.promptrepo.app/
 
+Repository of LLM prompts. Test prompt templates across different providers using different variables to fill in the templates. Try other peoples' prompts with their variables.
+
+![Screenshot](docs/promptrepo-main.png)
+
 ## How is this different
 
 1. Create "templates": messages / raw prompts that use `{{ }}` for denoting variables (Mustache.js)
