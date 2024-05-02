@@ -1,11 +1,11 @@
 import {
-  useCreateTemplate,
-  useDeleteTemplate,
-  useTemplates,
-} from "@/hooks/useTemplates";
+  useCreateDataset,
+  useDatasets,
+  useDeleteDataset,
+} from "@/hooks/useDatasets";
 import { formatAppleDate } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
-import { DEFAULT_TEMPLATE } from "@/types/prompt";
+import { DEFAULT_DATASET } from "@/types/dataset";
 import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useState } from "react";
@@ -18,47 +18,43 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-type TemplateListProps = {
-  onClickTemplate: (id: string) => void;
+type DatasetListProps = {
+  onClickDataset: (id: string) => void;
 };
 
-export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
+export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedTemplateId = searchParams.get("templateId");
+  const selectedDatasetId = searchParams.get("datasetId");
   const [openMoreActionIndex, setOpenMoreActionIndex] = useState<string | null>(
     null
   );
-  const { data: templates, isLoading } = useTemplates();
-  const { mutateAsync: createTemplate } = useCreateTemplate();
-  const { mutateAsync: deleteTemplate } = useDeleteTemplate();
-  const handleCreateTemplate = async () => {
-    await createTemplate({
-      ...DEFAULT_TEMPLATE,
+  const { data: datasets, isLoading } = useDatasets();
+  const { mutateAsync: createDataset } = useCreateDataset();
+  const { mutateAsync: deleteDataset } = useDeleteDataset();
+  const handleCreateDataset = async () => {
+    await createDataset({
+      ...DEFAULT_DATASET,
       id: uuidv4(),
-      name: "New Template",
+      name: "New Dataset",
     });
   };
-  const handleDeleteTemplate = async (id: string) => {
+  const handleDeleteDataset = async (id: string) => {
+    await deleteDataset(id);
     const newSearchParams = new URLSearchParams();
     searchParams.forEach((value, key) => {
-      if (key !== "templateId") {
+      if (key !== "datasetId") {
         newSearchParams.set(key, value);
       }
     });
-    await deleteTemplate(id);
-    if (selectedTemplateId === id)
+    if (selectedDatasetId === id)
       router.push(`/?${newSearchParams.toString()}`);
   };
-
   return (
     <div className="w-full h-full flex flex-col overflow-auto">
       <div className="flex items-center justify-between p-2 sticky top-0 bg-background">
-        <p className="text-xl font-semibold">Templates</p>
-        <Button
-          className="px-2 space-x-2 w-auto"
-          onClick={handleCreateTemplate}
-        >
+        <p className="text-xl font-semibold">Datasets</p>
+        <Button className="px-2 space-x-2 w-auto" onClick={handleCreateDataset}>
           <Plus size={16} />
           <p>Create</p>
         </Button>
@@ -68,11 +64,11 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
           <Loader2 className="animate-spin" size={16} />
         </div>
       )}
-      {templates &&
-        Object.values(templates).map((template) => {
+      {datasets &&
+        Object.values(datasets).map((dataset) => {
           return (
             <Button
-              key={template.id}
+              key={dataset.id}
               variant="ghost"
               className={cn(
                 "justify-between",
@@ -83,20 +79,20 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
                 "text-left",
                 "items-center"
               )}
-              aria-selected={selectedTemplateId === template.id}
+              aria-selected={selectedDatasetId === dataset.id}
               onClick={() => {
-                onClickTemplate(template.id);
+                onClickDataset(dataset.id);
               }}
             >
               <p className="text-left justify-start px-0 text-color-primary">
-                {template.name}
+                {dataset.name}
               </p>
               <div className="flex space-x-4 items-center">
                 <p className="text-xs text-muted-foreground">
-                  {formatAppleDate(new Date(template.createdAt))}
+                  {formatAppleDate(new Date(dataset.createdAt))}
                 </p>
                 <DropdownMenu
-                  open={openMoreActionIndex === template.id}
+                  open={openMoreActionIndex === dataset.id}
                   onOpenChange={(isOpen) => {
                     if (!isOpen) {
                       setOpenMoreActionIndex(null);
@@ -108,7 +104,7 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
                       className="px-0 py-0 h-auto p-1"
                       variant="secondary"
                       onClick={(e) => {
-                        setOpenMoreActionIndex(template.id);
+                        setOpenMoreActionIndex(dataset.id);
                         e.stopPropagation();
                       }}
                     >
@@ -120,7 +116,7 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
                       className="space-x-2 text-red-500"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteTemplate(template.id);
+                        handleDeleteDataset(dataset.id);
                       }}
                     >
                       <Trash size={16} />

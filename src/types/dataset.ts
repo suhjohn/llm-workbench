@@ -23,6 +23,14 @@ export const DatasetItemSchema = z.object({
 
 export type DatasetItemType = z.infer<typeof DatasetItemSchema>;
 
+export const DEFAULT_DATASET: DatasetType = {
+  id: uuidv4(),
+  name: "",
+  description: "",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
 export const createDefaultDatasetItem = (
   datasetId: string
 ): DatasetItemType => ({

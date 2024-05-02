@@ -15,9 +15,6 @@ const buttonVariants = cva(
     "font-medium",
     "ring-offset-background",
     "transition-colors",
-    
-    
-    
     "focus-visible:outline-1",
     "focus-visible:outline-blue-500",
     "disabled:pointer-events-none",
@@ -38,7 +35,7 @@ const buttonVariants = cva(
         unstyled: "",
       },
       size: {
-        default: "h-8 px-3 py-2",
+        default: "h-8 px-3 py-2 flex-shrink-0",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-8 w-10",

@@ -8,10 +8,16 @@ import {
   createDefaultDatasetItem,
 } from "@/types/dataset";
 import { PromptTemplateType } from "@/types/prompt";
-import { ChevronDownIcon, Play, Plus, Trash2Icon } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import {
+  ChevronDownIcon,
+  ChevronLeft,
+  Loader2,
+  Play,
+  Plus,
+  Trash2Icon,
+} from "lucide-react";
 import { FC, useCallback, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
 import { Button } from "./ui/button";
@@ -40,6 +46,14 @@ import { useToast } from "./ui/use-toast";
 
 type DatasetSectionProps = {
   template: PromptTemplateType;
+  dataset: DatasetType;
+  setDataset: (dataset: DatasetType) => void;
+  datasetItems: DatasetItemType[];
+  setDatasetItem: (args: {
+    action: "update" | "delete" | "create";
+    datasetItem: DatasetItemType;
+  }) => void;
+  onClickBack?: () => void;
 };
 
 type TableDatasetItemType = {
@@ -49,7 +63,14 @@ type TableDatasetItemType = {
   error: string;
 };
 
-export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
+export const DatasetSection: FC<DatasetSectionProps> = ({
+  template,
+  dataset,
+  setDataset,
+  datasetItems,
+  setDatasetItem,
+  onClickBack,
+}) => {
   const {
     resourceId,
     llmParameters,
@@ -57,19 +78,8 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
     messagesTemplate,
     enabledParameters,
   } = template;
-  const { data: resources } = useResources();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const selectedDatasetId = searchParams.get("datasetId");
-  const [dataset, setDataset] = useState<DatasetType>({
-    id: uuidv4(),
-    name: "Default dataset",
-    description: "",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
   const { toast } = useToast();
-  const [datasetItems, setDatasetItems] = useState<DatasetItemType[]>([]);
+  const { data: resources } = useResources();
   const [columnVisibility, setColumnVisibility] = useState<
     Record<keyof TableDatasetItemType, boolean>
   >({
@@ -119,10 +129,10 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
   );
 
   const handleAddDatasetItem = () => {
-    setDatasetItems((items) => [
-      ...items,
-      createDefaultDatasetItem(dataset.id),
-    ]);
+    setDatasetItem({
+      action: "create",
+      datasetItem: createDefaultDatasetItem(dataset.id),
+    });
   };
 
   const handleCreateCompletion = async (datasetItemId: string) => {
@@ -136,32 +146,46 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
         resourceId,
         params: parsedParameters,
       });
-      setDatasetItems((items) =>
-        items.map((item) =>
-          item.id === datasetItemId ? { ...item, output: response } : item
-        )
-      );
+      setDatasetItem({
+        action: "update",
+        datasetItem: {
+          ...datasetItem,
+          output: response,
+          error: "",
+        },
+      });
     } catch (e) {
       if (e instanceof Error)
-        setDatasetItems((items) =>
-          items.map((item) =>
-            item.id === datasetItemId
-              ? { ...item, error: e.message, output: "" }
-              : item
-          )
-        );
+        setDatasetItem({
+          action: "update",
+          datasetItem: {
+            ...datasetItem,
+            output: "",
+            error: e.message,
+          },
+        });
     }
   };
 
-  const runAllCompletions = async () => {
-    for (const datasetItem of datasetItems) {
-      await handleCreateCompletion(datasetItem.id);
-    }
-  };
+  const { mutateAsync: runAllCompletions, isPending: isRunningAllCompletions } =
+    useMutation({
+      mutationFn: async () => {
+        for (const datasetItem of datasetItems) {
+          await handleCreateCompletion(datasetItem.id);
+        }
+      },
+    });
 
   return (
     <div className="flex flex-col w-full h-full space-y-2 overflow-hidden">
       <div className="w-full flex space-x-2 justify-between">
+        <Button
+          className="px-2 py-2 h-auto"
+          onClick={onClickBack}
+          variant={"ghost"}
+        >
+          <ChevronLeft size={16} />
+        </Button>
         <ClickableInput
           rootClassName="w-full"
           value={dataset.name}
@@ -175,16 +199,23 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
           parse={(value) => value}
         />
         <Button
-          onClick={runAllCompletions}
-          disabled={datasetItems.length === 0}
+          onClick={() => runAllCompletions()}
+          disabled={datasetItems.length === 0 || isRunningAllCompletions}
           className="space-x-2"
         >
-          <Play size={16} />
-          <p>Run</p>
+          {isRunningAllCompletions && (
+            <Loader2 size={16} className="animate-spin" />
+          )}
+          {!isRunningAllCompletions && (
+            <>
+              <Play size={16} />
+              <p>Run</p>
+            </>
+          )}
         </Button>
       </div>
       <Card className="flex flex-col overflow-hidden h-full">
-        <CardHeader className="h-auto p-2 border-b">
+        <CardHeader className="h-auto p-4 border-b">
           <div className="flex justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -227,7 +258,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
             <TableHeader className="border-b">
               <TableRow>
                 {columnVisibility.promptParameters === true && (
-                  <TableHead className="min-w-96">Parameters</TableHead>
+                  <TableHead className="min-w-96">Prompt Parameters</TableHead>
                 )}
                 {columnVisibility.compiledInput === true && (
                   <TableHead className="min-w-96">Compiled Input</TableHead>
@@ -282,16 +313,14 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
                             }}
                             onBlur={(value) => {
                               try {
-                                setDatasetItems((items) =>
-                                  items.map((item) =>
-                                    item.id === datasetItem.id
-                                      ? {
-                                          ...item,
-                                          promptParameters: JSON.parse(value),
-                                        }
-                                      : item
-                                  )
-                                );
+                                const parsedValue = JSON.parse(value);
+                                setDatasetItem({
+                                  action: "update",
+                                  datasetItem: {
+                                    ...datasetItem,
+                                    promptParameters: parsedValue,
+                                  },
+                                });
                               } catch (e) {
                                 if (e instanceof Error) {
                                   toast({
@@ -330,7 +359,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
                             "whitespace-pre-wrap"
                           )}
                         >
-                          {datasetItem.output}
+                          {JSON.stringify(datasetItem.output, null, 2)}
                         </TableCell>
                       )}
                       {columnVisibility.error === true && (
@@ -358,9 +387,10 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
                     </ContextMenuItem>
                     <ContextMenuItem
                       onClick={() =>
-                        setDatasetItems((items) =>
-                          items.filter((item) => item.id !== datasetItem.id)
-                        )
+                        setDatasetItem({
+                          action: "delete",
+                          datasetItem,
+                        })
                       }
                       className="space-x-2 text-red-500"
                     >
@@ -373,7 +403,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({ template }) => {
             </TableBody>
           </Table>
         </CardContent>
-        <CardFooter className="bg-background w-full border-t flex items-center p-2">
+        <CardFooter className="bg-background w-full border-t flex items-center px-4 py-2">
           <p className="text-sm text-muted-foreground">
             {datasetItems.length} items
           </p>

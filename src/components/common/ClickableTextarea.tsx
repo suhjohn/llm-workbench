@@ -59,8 +59,8 @@ export const ClickableTextarea: FC<ClickableTextarea> = ({
           className={cn([
             "px-2",
             "text-xs",
-            "text-zinc-500",
-            "dark:text-zinc-400",
+            "text-gray-500",
+            "dark:text-gray-400",
           ])}
         >
           {label}
@@ -81,8 +81,8 @@ export const ClickableTextarea: FC<ClickableTextarea> = ({
             "rounded-md",
             "border",
             `text-left`,
-            "hover:border-zinc-200",
-            "dark:hover:border-zinc-600",
+            "hover:border-gray-200",
+            "dark:hover:border-gray-700",
             "whitespace-pre-wrap",
             "min-h-8",
             "focus-visible:outline-1",
@@ -91,7 +91,7 @@ export const ClickableTextarea: FC<ClickableTextarea> = ({
             readOnly ? "cursor-not-allowed" : "cursor-text",
             buttonClassName,
             inputText === undefined || isEmpty
-              ? ["text-zinc-500", "dark:text-zinc-400"]
+              ? ["text-gray-500", "dark:text-gray-400"]
               : [],
           ])}
         >
@@ -145,8 +145,8 @@ export const ClickableTextarea: FC<ClickableTextarea> = ({
             "w-full",
             "px-2",
             "text-xs",
-            "text-zinc-500",
-            "dark:text-zinc-400",
+            "text-gray-500",
+            "dark:text-gray-400",
           ])}
         >
           {description}

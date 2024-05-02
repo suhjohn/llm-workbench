@@ -27,6 +27,8 @@ const AutoResizeTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             "text-sm",
             "ring-offset-background",
             "placeholder:text-muted-foreground",
+            "hover:border-gray-200",
+            "dark:hover:border-gray-700",
             "focus-visible:outline-1",
             "focus-visible:outline-blue-500",
             "disabled:cursor-not-allowed",

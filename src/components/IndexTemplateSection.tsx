@@ -4,6 +4,7 @@ import { getVariables } from "@/lib/parser";
 import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
+import { ChevronLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { FC } from "react";
@@ -11,6 +12,7 @@ import { ClickableInput } from "./common/ClickableInput";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
 import { PromptInput } from "./common/PromptInput";
 import { PromptParameters } from "./common/PromptParameters";
+import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Label } from "./ui/label";
 import {
@@ -27,6 +29,7 @@ type TemplateSection = {
   setTemplate: (template: PromptTemplateType) => void;
   promptParameters: Record<string, any>;
   setPromptParameters: (parameters: Record<string, any>) => void;
+  onClickBack?: () => void;
 };
 
 export const TemplateSection: FC<TemplateSection> = ({
@@ -34,6 +37,7 @@ export const TemplateSection: FC<TemplateSection> = ({
   setTemplate,
   promptParameters,
   setPromptParameters,
+  onClickBack,
 }) => {
   const {
     name: templateName,
@@ -107,6 +111,13 @@ export const TemplateSection: FC<TemplateSection> = ({
   return (
     <div className="w-full flex flex-col space-y-2 h-full overflow-auto">
       <div className="flex justify-between space-x-2">
+        <Button
+          className="px-2 py-2 h-auto"
+          onClick={onClickBack}
+          variant={"ghost"}
+        >
+          <ChevronLeft size={16} />
+        </Button>
         <ClickableInput
           rootClassName="w-full"
           value={templateName}
@@ -146,12 +157,12 @@ export const TemplateSection: FC<TemplateSection> = ({
         <CardHeader className="w-auto block">
           {completionType === "completion" && <Label>Prompt Template</Label>}
           {completionType === "chat" && <Label>Messages Template</Label>}
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Use mustache syntax to define variables. e.g.
             {"Respond to the user's message: {{ user_input }}"}
           </p>
           <p className="text-sm">
-            <span className="text-gray-500 dark:text-gray-400">{`Learn more at: `}</span>
+            <span className="text-muted-foreground">{`Learn more at: `}</span>
             <Link
               href="https://github.com/janl/mustache.js"
               className="text-blue-500 hover:underline"

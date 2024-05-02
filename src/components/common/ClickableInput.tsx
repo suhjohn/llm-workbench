@@ -68,7 +68,7 @@ export const ClickableInput: FC<ClickableInputProps> = ({
             `text-left`,
             "border-transparent",
             "hover:border-gray-200",
-            "dark:hover:border-gray-600",
+            "dark:hover:border-gray-700",
             "min-h-8",
             "focus-visible:outline-0",
             "focus-visible:ring-0",
