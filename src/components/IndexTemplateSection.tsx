@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 
 type TemplateSection = {
   template: PromptTemplateType;
@@ -145,7 +146,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {resources.map((resource) => (
+            {[OpenAIChatCompletionResource].map((resource) => (
               <SelectItem key={resource.id} value={resource.id}>
                 {resource.name}
               </SelectItem>
