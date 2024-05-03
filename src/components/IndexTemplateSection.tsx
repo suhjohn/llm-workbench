@@ -111,26 +111,28 @@ export const TemplateSection: FC<TemplateSection> = ({
 
   return (
     <div className="w-full flex flex-col space-y-2 h-full overflow-auto">
-      <div className="flex justify-between space-x-2">
-        <Button
-          className="px-2 py-2 h-auto"
-          onClick={onClickBack}
-          variant={"ghost"}
-        >
-          <ChevronLeft size={16} />
-        </Button>
-        <ClickableInput
-          rootClassName="w-full"
-          value={templateName}
-          placeholder="Input a template name..."
-          onBlur={(value) => {
-            setTemplate({
-              ...templateObj,
-              name: value,
-            });
-          }}
-          parse={(value) => value}
-        />
+      <div className="flex justify-between flex-col md:flex-row gap-2">
+        <div className="flex justify-between w-full space-x-2">
+          <Button
+            className="px-2 py-2 h-auto"
+            onClick={onClickBack}
+            variant={"ghost"}
+          >
+            <ChevronLeft size={16} />
+          </Button>
+          <ClickableInput
+            rootClassName="w-full"
+            value={templateName}
+            placeholder="Input a template name..."
+            onBlur={(value) => {
+              setTemplate({
+                ...templateObj,
+                name: value,
+              });
+            }}
+            parse={(value) => value}
+          />
+        </div>
         <Select
           value={resourceId}
           onValueChange={(value) => {
@@ -140,7 +142,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             });
           }}
         >
-          <SelectTrigger className="w-64 flex-shrink-0">
+          <SelectTrigger className="w-full md:w-64 flex-shrink-0">
             <SelectValue>
               {selectedResource?.name || "Select a resource"}
             </SelectValue>

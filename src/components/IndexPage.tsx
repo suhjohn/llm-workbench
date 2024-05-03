@@ -155,7 +155,7 @@ export default function IndexPage() {
   };
 
   return (
-    <div className={"flex relative flex-col space-y-0 h-[100dvh] w-[100vw]"}>
+    <div className={"flex relative flex-col space-y-0 md:h-[100dvh] w-[100vw]"}>
       <TopNavigation />
       <div
         className={cn(
@@ -172,7 +172,8 @@ export default function IndexPage() {
         <div
           className={cn(
             "w-full",
-            "h-auto",
+            "min-h-[100dvh]",
+            "md:min-h-auto",
             "flex",
             "space-x-2",
             "overflow-hidden"
@@ -194,7 +195,8 @@ export default function IndexPage() {
         <div
           className={cn(
             "w-full",
-            "h-auto",
+            "min-h-[100dvh]",
+            "md:min-h-auto",
             "flex",
             "space-x-2",
             "overflow-hidden"
