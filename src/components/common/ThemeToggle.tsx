@@ -42,7 +42,9 @@ export function ThemeToggle() {
       }}
     >
       <SelectTrigger className="w-auto">
-        <SelectValue />
+        <SelectValue>
+          {options.find((option) => option.value === theme)?.icon}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {options.map((themeOption) => (

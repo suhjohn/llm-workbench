@@ -45,7 +45,7 @@ export const APIKeysDialog = () => {
       <DialogTrigger asChild>
         <Button variant="outline" className="space-x-2">
           <KeyIcon size={16} />
-          <p>API Keys</p>
+          <p className="hidden md:block">API Keys</p>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-screen-md">
