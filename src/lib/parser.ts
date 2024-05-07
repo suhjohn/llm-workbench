@@ -13,12 +13,7 @@ const getMustacheVariables = (template: string) => {
 
 export const getVariables = (parser: string, template: string) => {
   if (parser === "mustache") {
-    try {
-      return getMustacheVariables(template);
-    } catch (e) {
-      console.error(e);
-      return [];
-    }
+    return getMustacheVariables(template);
   }
   throw new Error(`Unknown parser: ${parser}`);
 };

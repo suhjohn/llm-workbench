@@ -1,17 +1,19 @@
 "use client";
+import { OpenAIChatCompletionResource } from "@/fixtures/resources";
+import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
-import { getVariables } from "@/lib/parser";
 import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
 import { ChevronLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { ClickableInput } from "./common/ClickableInput";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
 import { PromptInput } from "./common/PromptInput";
 import { PromptParameters } from "./common/PromptParameters";
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Label } from "./ui/label";
@@ -23,13 +25,12 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 
 type TemplateSection = {
   template: PromptTemplateType;
   setTemplate: (template: PromptTemplateType) => void;
-  promptParameters: Record<string, any>;
-  setPromptParameters: (parameters: Record<string, any>) => void;
+  promptParameters: string[];
+  setPromptParameters: (parameters: string[]) => void;
   onClickBack?: () => void;
 };
 
@@ -50,7 +51,7 @@ export const TemplateSection: FC<TemplateSection> = ({
   } = templateObj;
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
-
+  const [promptParametersError, setPromptParametersError] = useState<string | undefined>(undefined);
   const selectedParameters = enabledParameters.reduce((acc, key) => {
     acc[key] = llmParameters[key];
     return acc;
@@ -59,37 +60,27 @@ export const TemplateSection: FC<TemplateSection> = ({
 
   const completionType = selectedResource?.completionType;
 
-  const getVariablesFromParameters = (parser: string) => {
-    if (messagesTemplate !== undefined && messagesTemplate !== null) {
-      const variables = new Set<string>();
-      messagesTemplate?.forEach((message) => {
-        getVariables(parser, message.content).forEach((variable) => {
-          variables.add(variable);
-        });
-      });
-      return Array.from(variables);
-    }
-    if (promptTemplate !== undefined && promptTemplate !== null) {
-      return getVariables(parser, promptTemplate);
-    }
-    return [];
-  };
+  const getVariablesFromParameters = useGetVariablesCallback();
 
   const handleSetPromptTemplate = (newPromptTemplate: string) => {
     setTemplate({
       ...templateObj,
       promptTemplate: newPromptTemplate,
     });
-    const newVariables = getVariablesFromParameters("mustache");
-    const newPromptParameters = newVariables.reduce((acc, variable) => {
-      acc[variable] = "";
-      return acc;
-    }, {} as Record<string, any>);
-    const allNewPromptParameters = {
-      ...newPromptParameters,
-      ...promptParameters,
-    };
-    setPromptParameters(allNewPromptParameters);
+    try{
+      const newPromptParameters = getVariablesFromParameters({
+        promptTemplate: newPromptTemplate,
+        messagesTemplate: undefined,
+        parser: "mustache",
+      });
+      setPromptParameters(newPromptParameters);
+      setPromptParametersError(undefined);
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error(`Error while setting prompt parameters: ${e.message}`);
+        setPromptParametersError(`Error while setting prompt parameters: ${e.message}`);
+      }
+    }
   };
 
   const handleSetMessagesTemplate = (newMessagesTemplate: ChatMessage[]) => {
@@ -97,20 +88,24 @@ export const TemplateSection: FC<TemplateSection> = ({
       ...templateObj,
       messagesTemplate: newMessagesTemplate,
     });
-    const newVariables = getVariablesFromParameters("mustache");
-    const newPromptParameters = newVariables.reduce((acc, variable) => {
-      acc[variable] = "";
-      return acc;
-    }, {} as Record<string, any>);
-    const allNewPromptParameters = {
-      ...newPromptParameters,
-      ...promptParameters,
-    };
-    setPromptParameters(allNewPromptParameters);
+    try {
+      const newPromptParameters = getVariablesFromParameters({
+        promptTemplate: undefined,
+        messagesTemplate: newMessagesTemplate,
+        parser: "mustache",
+      });
+      setPromptParameters(newPromptParameters);
+      setPromptParametersError(undefined);
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error(`Error while setting prompt parameters: ${e.message}`);
+        setPromptParametersError(`Error while setting prompt parameters: ${e.message}`);
+      }
+    }
   };
 
   return (
-    <div className="w-full flex flex-col space-y-2 h-full overflow-auto">
+    <div className="flex w-full flex-col space-y-2 h-full overflow-auto">
       <div className="flex justify-between flex-col md:flex-row gap-2">
         <div className="flex justify-between w-full space-x-2">
           <Button
@@ -175,7 +170,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             </Link>
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <PromptInput
             completionPromptProps={
               completionType === "completion"
@@ -194,6 +189,23 @@ export const TemplateSection: FC<TemplateSection> = ({
                 : undefined
             }
           />
+          <div className="flex gap-2 items-center">
+            {promptParametersError && (
+              <p className="text-red-500 text-sm">{promptParametersError}</p>
+            )}
+            {promptParametersError === undefined && (
+              <>
+                <span className="text-muted-foreground text-sm">
+                  Variables:
+                </span>
+                {promptParameters.map((parameter) => (
+                  <Badge key={parameter} variant={"secondary"}>
+                    {parameter}
+                  </Badge>
+                ))}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
       <Card>

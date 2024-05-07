@@ -32,6 +32,9 @@ export function ThemeToggle() {
       icon: <Settings size={16} />,
     },
   ];
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <Select

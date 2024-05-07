@@ -46,6 +46,7 @@ import { useToast } from "./ui/use-toast";
 
 type DatasetSectionProps = {
   template: PromptTemplateType;
+  promptParameters: string[];
   dataset: DatasetType;
   setDataset: (dataset: DatasetType) => void;
   datasetItems: DatasetItemType[];
@@ -65,6 +66,7 @@ type TableDatasetItemType = {
 
 export const DatasetSection: FC<DatasetSectionProps> = ({
   template,
+  promptParameters,
   dataset,
   setDataset,
   datasetItems,
@@ -84,7 +86,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
     Record<keyof TableDatasetItemType, boolean>
   >({
     promptParameters: true,
-    compiledInput: true,
+    compiledInput: false,
     output: true,
     error: true,
   });
@@ -127,7 +129,6 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       completionType,
     ]
   );
-
   const handleAddDatasetItem = () => {
     setDatasetItem({
       action: "create",
@@ -257,9 +258,11 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           <Table className="w-full h-full flex-shrink-0 overflow-auto">
             <TableHeader className="border-b">
               <TableRow>
-                {columnVisibility.promptParameters === true && (
-                  <TableHead className="min-w-96">Prompt Parameters</TableHead>
-                )}
+                {promptParameters.map((param) => (
+                  <TableHead key={param} className="min-w-96">
+                    {param}
+                  </TableHead>
+                ))}
                 {columnVisibility.compiledInput === true && (
                   <TableHead className="min-w-96">Compiled Input</TableHead>
                 )}
@@ -276,49 +279,69 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 <ContextMenu key={datasetItem.id}>
                   <ContextMenuTrigger asChild>
                     <TableRow>
-                      {columnVisibility.promptParameters === true && (
+                      {promptParameters.map((promptParameter) => (
                         <TableCell
+                          key={promptParameter}
                           className={cn(
-                            "align-baseline",
-                            "min-w-96",
+                            "p-0.5",
+                            "h-auto",
+                            "w-96",
                             "flex-shrink-0",
                             "whitespace-pre-wrap"
                           )}
                         >
                           <ClickableTextarea
-                            rootClassName="h-full"
+                            rootClassName={cn(
+                              "w-full",
+                              "flex",
+                              "h-full",
+                              "border",
+                              "border-transparent",
+                              "hover:border-gray-200",
+                              "dark:hover:border-gray-700",
+                              "rounded-md",
+                            )}
                             textAreaProps={{
                               className: cn(
-                                "h-full",
+                                "align-baseline",
                                 "min-h-full",
-                                "align-baseline"
+                                "h-full",
+                                "max-h-64",
+                                "whitespace-pre-wrap",
+                                "rounded-none",
+                                "border-none"
                               ),
                               minRows: -1,
                             }}
                             buttonClassName={[
-                              "h-full",
-                              "min-h-full",
                               "align-baseline",
-                              "flex",
                               "items-start",
+                              "flex",
+                              "h-full",
+                              "max-h-64",
+                              "break-all",
+                              "whitespace-pre-wrap",
+                              "overflow-y-auto",
+                              "rounded-none",
+                              "border-none",
                             ]}
-                            value={JSON.stringify(
-                              datasetItem.promptParameters,
-                              null,
-                              2
-                            )}
-                            parse={(value) => {
-                              JSON.parse(value);
-                              return value;
-                            }}
+                            placeholder={
+                              "Input a value for " + promptParameter + "... "
+                            }
+                            value={
+                              datasetItem.promptParameters[promptParameter] ??
+                              ""
+                            }
                             onBlur={(value) => {
                               try {
-                                const parsedValue = JSON.parse(value);
                                 setDatasetItem({
                                   action: "update",
                                   datasetItem: {
                                     ...datasetItem,
-                                    promptParameters: parsedValue,
+                                    promptParameters: {
+                                      ...datasetItem.promptParameters,
+                                      [promptParameter]: value,
+                                    },
                                   },
                                 });
                               } catch (e) {
@@ -333,38 +356,59 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                             }}
                           />
                         </TableCell>
-                      )}
+                      ))}
                       {columnVisibility.compiledInput === true && (
                         <TableCell
                           className={cn(
+                            "p-1",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
                             "whitespace-pre-wrap"
                           )}
                         >
-                          {JSON.stringify(
-                            getParsedParameters(datasetItem.promptParameters),
-                            null,
-                            2
-                          )}
+                          <p className={cn(["overflow-y-auto", "max-h-64"])}>
+                            {JSON.stringify(
+                              getParsedParameters(datasetItem.promptParameters),
+                              null,
+                              2
+                            )}
+                          </p>
                         </TableCell>
                       )}
                       {columnVisibility.output === true && (
                         <TableCell
                           className={cn(
+                            "p-1",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
                             "whitespace-pre-wrap"
                           )}
                         >
-                          {JSON.stringify(datasetItem.output, null, 2)}
+                          <p
+                            className={cn([
+                              "overflow-y-auto",
+                              "max-h-64",
+                              "whitespace-pre-wrap",
+                              (datasetItem.output === undefined ||
+                                datasetItem.output === "") && [
+                                "text-muted-foreground",
+                                "italic",
+                              ],
+                            ])}
+                          >
+                            {datasetItem.output === undefined ||
+                            datasetItem.output === ""
+                              ? "No output."
+                              : datasetItem.output}
+                          </p>
                         </TableCell>
                       )}
                       {columnVisibility.error === true && (
                         <TableCell
                           className={cn(
+                            "p-1",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",

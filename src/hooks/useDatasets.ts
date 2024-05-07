@@ -156,11 +156,6 @@ export const useUpdateDatasetItem = () => {
           [datasetItem.id]: datasetItem,
         }
       );
-      const asArray = Object.values(datasetItems);
-      queryClient.setQueryData(
-        [DATASET_ITEMS_QUERY_KEY, { datasetId: datasetItem.datasetId }],
-        asArray
-      );
     },
   });
 };

@@ -8,6 +8,7 @@ import {
   useUpdateDataset,
   useUpdateDatasetItem,
 } from "@/hooks/useDatasets";
+import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetItemType, DatasetType } from "@/types/dataset";
@@ -29,22 +30,46 @@ export default function IndexPage() {
   const selectedDatasetId = searchParams.get("datasetId");
   const [template, setTemplate] =
     useState<PromptTemplateType>(DEFAULT_TEMPLATE);
-  const [promptParameters, setPromptParameters] = useState({});
+  const [promptParameters, setPromptParameters] = useState<string[]>([]);
   const [dataset, setDataset] = useState<DatasetType>(DEFAULT_DATASET);
   const [datasetItems, setDatasetItems] = useState<DatasetItemType[]>([]);
-
   const { data: templates } = useTemplates();
   const { data: datasets } = useDatasets();
   const { data: fetchedDatasetItems } = useDatasetItems(selectedDatasetId);
+  const getVariablesFromParameters = useGetVariablesCallback();
 
   useEffect(() => {
+    if (selectedTemplateId === template.id) {
+      return;
+    }
     if (templates !== undefined && selectedTemplateId !== null) {
       const selectedTemplate = templates[selectedTemplateId];
       if (selectedTemplate) {
         setTemplate(selectedTemplate);
+        try {
+          setPromptParameters(
+            getVariablesFromParameters({
+              messagesTemplate: selectedTemplate.messagesTemplate,
+              promptTemplate: selectedTemplate.promptTemplate,
+              parser: "mustache",
+            })
+          );
+        } catch (e) {
+          console.error(
+            `[IndexPage.tsx] Error setting prompt parameters: ${e}`
+          );
+        }
       }
     }
-  }, [selectedTemplateId, templates, setTemplate]);
+  }, [
+    template,
+    selectedTemplateId,
+    templates,
+    setTemplate,
+    setPromptParameters,
+    getVariablesFromParameters,
+  ]);
+
   useEffect(() => {
     if (datasets !== undefined && selectedDatasetId !== null) {
       const selectedDataset = datasets[selectedDatasetId];
@@ -160,20 +185,18 @@ export default function IndexPage() {
       <div
         className={cn(
           "w-full",
-          "h-full",
           "flex",
           "gap-4",
           "p-2",
-          "overflow-hidden",
           "flex-col",
-          "lg:flex-row"
+          "md:flex-row",
+          "overflow-hidden"
         )}
       >
         <div
           className={cn(
             "w-full",
-            "min-h-[100dvh]",
-            "md:min-h-auto",
+            "h-full",
             "flex",
             "space-x-2",
             "overflow-hidden"
@@ -192,22 +215,14 @@ export default function IndexPage() {
             />
           )}
         </div>
-        <div
-          className={cn(
-            "w-full",
-            "min-h-[100dvh]",
-            "md:min-h-auto",
-            "flex",
-            "space-x-2",
-            "overflow-hidden"
-          )}
-        >
+        <div className={cn("w-full", "flex", "space-x-2", "overflow-hidden")}>
           {datasetView === "list" && (
             <DatasetList onClickDataset={handleClickDataset} />
           )}
           {datasetView === "detail" && (
             <DatasetSection
               dataset={dataset}
+              promptParameters={promptParameters}
               setDataset={handleUpdateDataset}
               datasetItems={datasetItems}
               setDatasetItem={handleUpdateDatasetItem}
