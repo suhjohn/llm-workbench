@@ -276,7 +276,7 @@ export default function IndexPage() {
             <AlignHorizontalDistributeCenter size={12} />
           </Button>
           <div
-            className="mx-[2px] h-full w-[2px] cursor-pointer bg-muted hover:bg-blue-500 flex flex-shrink-0"
+            className="mx-[2px] h-full w-[2px] cursor-col-resize bg-muted hover:bg-blue-500 flex flex-shrink-0"
             onMouseDown={() => {
               isResized.current = true;
             }}
