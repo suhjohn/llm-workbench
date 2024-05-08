@@ -2,12 +2,13 @@ import { useCreateCompletion } from "@/hooks/useCreateCompletion";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
 import { compile } from "@/lib/parser";
-import { cn } from "@/lib/utils";
+import { cn, getNestedValue } from "@/lib/utils";
 import {
   DatasetItemType,
   DatasetType,
   createDefaultDatasetItem,
 } from "@/types/dataset";
+import { JsonValue } from "@/types/json";
 import { PromptTemplateType } from "@/types/prompt";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -19,6 +20,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
+import { ArrayInput } from "./common/ArrayInput";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
 import { Button } from "./ui/button";
@@ -92,7 +94,10 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       return [];
     }
   }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
-
+  const [outputPath, setOutputPath] = useState<string>("");
+  const [outputPathArray, setOutputPathArray] = useState<(string | number)[]>(
+    []
+  );
   const { toast } = useToast();
   const { data: resources } = useResources();
   const [columnVisibility, setColumnVisibility] = useState<
@@ -105,6 +110,25 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
   const selectedResource = resources.find((r) => r.id === resourceId);
   const completionType = selectedResource?.completionType;
+
+  const getDatasetItemOutput = (datasetItem: DatasetItemType) => {
+    let res: JsonValue | undefined = "No output.";
+    if (datasetItem.output === undefined || datasetItem.output === "") {
+      return res;
+    }
+    if (outputPath === "") {
+      res = datasetItem.output;
+    } else {
+      res = getNestedValue(datasetItem.output, outputPathArray);
+    }
+    if (res === undefined) {
+      return JSON.stringify(datasetItem.output, null, 2);
+    }
+    if (typeof res === "object") {
+      return JSON.stringify(res, null, 2);
+    }
+    return res;
+  };
 
   const getParsedParameters = useCallback(
     (promptParameters: Record<string, string>) => {
@@ -370,7 +394,15 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                   <TableHead className="min-w-96">Compiled Input</TableHead>
                 )}
                 {columnVisibility.output === true && (
-                  <TableHead className="min-w-96">Output</TableHead>
+                  <TableHead className="flex space-x-2 items-center min-w-96">
+                    <p>Output</p>
+                    <ArrayInput
+                      value={outputPath}
+                      readOnly={false}
+                      onChange={setOutputPath}
+                      onArrayChange={setOutputPathArray}
+                    />
+                  </TableHead>
                 )}
                 {columnVisibility.error === true && (
                   <TableHead className="min-w-96">Error</TableHead>
@@ -522,10 +554,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                               ],
                             ])}
                           >
-                            {datasetItem.output === undefined ||
-                            datasetItem.output === ""
-                              ? "No output."
-                              : JSON.stringify(datasetItem.output, null, 2)}
+                            {getDatasetItemOutput(datasetItem)}
                           </p>
                         </TableCell>
                       )}
