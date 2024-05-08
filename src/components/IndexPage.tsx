@@ -187,6 +187,8 @@ export default function IndexPage() {
           "flex",
           "gap-4",
           "p-4",
+          "min-h-96",
+          "md:min-h-auto",
           "md:p-2",
           "flex-col",
           "md:flex-row",
@@ -213,7 +215,17 @@ export default function IndexPage() {
             />
           )}
         </div>
-        <div className={cn("w-full", "flex", "space-x-2", "overflow-hidden")}>
+        <div
+          className={cn(
+            "w-full",
+            "h-full",
+            "flex",
+            "space-x-2",
+            "overflow-hidden",
+            "min-h-96",
+            "md:min-h-auto"
+          )}
+        >
           {datasetView === "list" && (
             <DatasetList onClickDataset={handleClickDataset} />
           )}
