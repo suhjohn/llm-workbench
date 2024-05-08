@@ -18,6 +18,7 @@ import { AlignHorizontalDistributeCenter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
+import { v4 as uuidv4 } from "uuid";
 import { DatasetList } from "./DatasetList";
 import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
@@ -63,9 +64,18 @@ export default function IndexPage() {
   const selectedTemplateId = searchParams.get("templateId");
   const selectedDatasetId = searchParams.get("datasetId");
 
-  const [template, setTemplate] =
-    useState<PromptTemplateType>(DEFAULT_TEMPLATE);
-  const [dataset, setDataset] = useState<DatasetType>(DEFAULT_DATASET);
+  const [template, setTemplate] = useState<PromptTemplateType>({
+    ...DEFAULT_TEMPLATE,
+    id: uuidv4(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  const [dataset, setDataset] = useState<DatasetType>({
+    ...DEFAULT_DATASET,
+    id: uuidv4(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
   const [datasetItems, setDatasetItems] = useState<DatasetItemType[]>([]);
   const { data: templates } = useTemplates();
   const { data: datasets } = useDatasets();
@@ -76,7 +86,12 @@ export default function IndexPage() {
       return;
     }
     if (selectedTemplateId === null) {
-      setTemplate(DEFAULT_TEMPLATE);
+      setTemplate({
+        ...DEFAULT_TEMPLATE,
+        id: uuidv4(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     }
     if (templates !== undefined && selectedTemplateId !== null) {
       const selectedTemplate = templates[selectedTemplateId];
@@ -88,7 +103,11 @@ export default function IndexPage() {
 
   useEffect(() => {
     if (selectedDatasetId === null) {
-      setDataset(DEFAULT_DATASET);
+      setDataset({
+        ...DEFAULT_DATASET,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     }
     if (datasets !== undefined && selectedDatasetId !== null) {
       const selectedDataset = datasets[selectedDatasetId];

@@ -5,7 +5,6 @@ import {
 } from "@/hooks/useDatasets";
 import { formatAppleDate } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
-import { DEFAULT_DATASET } from "@/types/dataset";
 import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useState } from "react";
@@ -34,7 +33,6 @@ export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
   const { mutateAsync: deleteDataset } = useDeleteDataset();
   const handleCreateDataset = async () => {
     await createDataset({
-      ...DEFAULT_DATASET,
       id: uuidv4(),
       name: "New Dataset",
     });

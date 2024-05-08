@@ -37,6 +37,8 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
       ...DEFAULT_TEMPLATE,
       id: uuidv4(),
       name: "New Template",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
   };
   const handleDeleteTemplate = async (id: string) => {

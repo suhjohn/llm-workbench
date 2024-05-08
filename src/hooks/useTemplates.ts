@@ -51,7 +51,11 @@ export const useCreateTemplate = () => {
         }>(TEMPLATES_LOCAL_STORAGE_KEY)) ?? {};
       await localForageStore.setItem(TEMPLATES_LOCAL_STORAGE_KEY, {
         ...templates,
-        [template.id]: template,
+        [template.id]: {
+          ...template,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
       });
       queryClient.setQueryData([TEMPLATES_QUERY_KEY], {
         ...templates,
