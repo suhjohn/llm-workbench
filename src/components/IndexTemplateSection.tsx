@@ -13,9 +13,14 @@ import { ClickableInput } from "./common/ClickableInput";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
 import { PromptInput } from "./common/PromptInput";
 import { PromptParameters } from "./common/PromptParameters";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -154,92 +159,110 @@ export const TemplateSection: FC<TemplateSection> = ({
           </SelectContent>
         </Select>
       </div>
-      <Card>
-        <CardHeader className="w-auto block">
-          {completionType === "completion" && <Label>Prompt Template</Label>}
-          {completionType === "chat" && <Label>Messages Template</Label>}
-          <p className="text-sm text-muted-foreground">
-            Use mustache syntax to define variables. e.g.
-            {"Respond to the user's message: {{ user_input }}"}
-          </p>
-          <p className="text-sm">
-            <span className="text-muted-foreground">{`Learn more at: `}</span>
-            <Link
-              href="https://github.com/janl/mustache.js"
-              className="text-blue-500 hover:underline"
-              target="_blank"
-            >
-              https://github.com/janl/mustache.js
-            </Link>
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <PromptInput
-            completionPromptProps={
-              completionType === "completion"
-                ? {
-                    value: promptTemplate,
-                    onChange: handleSetPromptTemplate,
+      <Accordion
+        type="multiple"
+        defaultValue={["prompt", "parameters"]}
+        className="w-full px-0 md:px-2"
+      >
+        <AccordionItem value="prompt">
+          <AccordionTrigger>
+            {completionType === "completion" && <Label>Prompt Template</Label>}
+            {completionType === "chat" && <Label>Messages Template</Label>}
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Use mustache syntax to define variables. e.g.
+                  {"Respond to the user's message: {{ user_input }}"}
+                </p>
+                <p className="text-sm">
+                  <span className="text-muted-foreground">{`Learn more at: `}</span>
+                  <Link
+                    href="https://github.com/janl/mustache.js"
+                    className="text-blue-500 hover:underline"
+                    target="_blank"
+                  >
+                    https://github.com/janl/mustache.js
+                  </Link>
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <PromptInput
+                  completionPromptProps={
+                    completionType === "completion"
+                      ? {
+                          value: promptTemplate,
+                          onChange: handleSetPromptTemplate,
+                        }
+                      : undefined
                   }
-                : undefined
-            }
-            chatPromptProps={
-              completionType === "chat"
-                ? {
-                    value: messagesTemplate,
-                    onChange: handleSetMessagesTemplate,
+                  chatPromptProps={
+                    completionType === "chat"
+                      ? {
+                          value: messagesTemplate,
+                          onChange: handleSetMessagesTemplate,
+                        }
+                      : undefined
                   }
-                : undefined
-            }
-          />
-          <div className="flex gap-2 items-center">
-            {promptParametersError && (
-              <p className="text-red-500 text-sm">{promptParametersError}</p>
-            )}
-            {promptParametersError === undefined && (
-              <>
-                <span className="text-muted-foreground text-sm">
-                  Variables:
-                </span>
-                {promptParameters.map((parameter) => (
-                  <Badge key={parameter} variant={"secondary"}>
-                    {parameter}
-                  </Badge>
-                ))}
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <Tabs defaultValue="ui">
-          <CardHeader className="w-auto block">
+                />
+                <div className="flex gap-2 items-center">
+                  {promptParametersError && (
+                    <p className="text-red-500 text-sm">
+                      {promptParametersError}
+                    </p>
+                  )}
+                  {promptParametersError === undefined && (
+                    <>
+                      <span className="text-muted-foreground text-sm">
+                        Variables:
+                      </span>
+                      {promptParameters.length === 0 && (
+                        <span className="italic text-muted-foreground text-sm">
+                          No variables found.
+                        </span>
+                      )}
+                      {promptParameters.map((parameter) => (
+                        <Badge key={parameter} variant={"secondary"}>
+                          {parameter}
+                        </Badge>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="parameters">
+          <AccordionTrigger>
             <Label>Model Parameters</Label>
-          </CardHeader>
-          <CardContent>
-            <TabsList>
-              <TabsTrigger value="ui">UI</TabsTrigger>
-              <TabsTrigger value="json">JSON</TabsTrigger>
-            </TabsList>
-            <TabsContent value="ui">
-              <PromptParameters
-                template={templateObj}
-                setTemplate={setTemplate}
-              />
-            </TabsContent>
-            <TabsContent value="json">
-              <CodeMirrorWithError
-                readOnly={true}
-                className="w-full"
-                theme={resolvedTheme === "dark" ? "dark" : "light"}
-                value={JSON.stringify(selectedParameters, null, 2)}
-                extensions={[json()]}
-              />
-            </TabsContent>
-          </CardContent>
-        </Tabs>
-        <CardFooter />
-      </Card>
+          </AccordionTrigger>
+          <AccordionContent>
+            <Tabs defaultValue="ui">
+              <TabsList>
+                <TabsTrigger value="ui">UI</TabsTrigger>
+                <TabsTrigger value="json">JSON</TabsTrigger>
+              </TabsList>
+              <TabsContent value="ui">
+                <PromptParameters
+                  template={templateObj}
+                  setTemplate={setTemplate}
+                />
+              </TabsContent>
+              <TabsContent value="json">
+                <CodeMirrorWithError
+                  readOnly={true}
+                  className="w-full"
+                  theme={resolvedTheme === "dark" ? "dark" : "light"}
+                  value={JSON.stringify(selectedParameters, null, 2)}
+                  extensions={[json()]}
+                />
+              </TabsContent>
+            </Tabs>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };

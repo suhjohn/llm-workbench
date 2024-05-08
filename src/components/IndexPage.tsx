@@ -186,7 +186,8 @@ export default function IndexPage() {
           "w-full",
           "flex",
           "gap-4",
-          "p-2",
+          "p-4",
+          "md:p-2",
           "flex-col",
           "md:flex-row",
           "overflow-hidden"
