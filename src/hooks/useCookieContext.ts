@@ -1,4 +1,4 @@
-import { CookieContext } from "@/app/CookieProvider";
+import { CookieContext } from "@/providers/CookieProvider";
 import { useContext } from "react";
 import { z } from "zod";
 

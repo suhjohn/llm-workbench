@@ -1,11 +1,11 @@
 import { Inter } from "next/font/google";
-import { ReactQueryProvider } from "./ReactQueryProvider";
+import { ReactQueryProvider } from "../providers/ReactQueryProvider";
 
 import { Toaster } from "@/components/ui/toaster";
 import { getCookies } from "cookies-next";
 import { ThemeProvider } from "next-themes";
 import { cookies } from "next/headers";
-import { CookieProvider } from "./CookieProvider";
+import { CookieProvider } from "../providers/CookieProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
