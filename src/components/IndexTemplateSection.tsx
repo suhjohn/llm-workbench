@@ -2,12 +2,17 @@
 import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
+import {
+  useDeleteTemplateDataset,
+  useTemplateDatasets,
+} from "@/hooks/useTemplates";
 import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
 import { ChevronLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useMemo } from "react";
 import { ClickableInput } from "./common/ClickableInput";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
@@ -52,6 +57,8 @@ export const TemplateSection: FC<TemplateSection> = ({
   } = templateObj;
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const selectedParameters = enabledParameters.reduce((acc, key) => {
     acc[key] = llmParameters[key];
     return acc;
@@ -59,6 +66,8 @@ export const TemplateSection: FC<TemplateSection> = ({
   const selectedResource = resources.find((r) => r.id === resourceId);
   const completionType = selectedResource?.completionType;
   const getVariablesFromParameters = useGetVariablesCallback();
+  const { data: templateDatasets } = useTemplateDatasets(templateObj.id);
+  const { mutateAsync: deleteTemplateDataset } = useDeleteTemplateDataset();
 
   const promptParameters = useMemo(() => {
     try {
@@ -100,6 +109,18 @@ export const TemplateSection: FC<TemplateSection> = ({
       ...templateObj,
       messagesTemplate: newMessagesTemplate,
     });
+  };
+
+  const handleClickDataset = (id: string) => {
+    const newSearchParams = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (key !== "datasetId") {
+        newSearchParams.set(key, value);
+      }
+    });
+    newSearchParams.set("datasetId", id);
+    newSearchParams.set("datasetView", "detail");
+    router.push(`/?${newSearchParams.toString()}`);
   };
 
   return (
@@ -196,7 +217,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                       : undefined
                   }
                 />
-                <div className="flex gap-1 items-center">
+                <div className="flex gap-1 items-center flex-wrap">
                   {promptParametersError && (
                     <p className="text-red-500 text-sm">
                       {promptParametersError}
@@ -250,6 +271,49 @@ export const TemplateSection: FC<TemplateSection> = ({
                 />
               </TabsContent>
             </Tabs>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="datasets">
+          <AccordionTrigger>
+            <Label>Connected Datasets</Label>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="w-full flex flex-col space-y-4">
+              <p className="text-muted-foreground text-sm">
+                Connect datasets to this template to refer how the prompt should
+                be used.
+              </p>
+              <div className="w-full flex flex-col gap-2 border border-gray-200 dark:border-gray-800 rounded-md">
+                {templateDatasets?.map((templateDataset) => (
+                  <div
+                    key={templateDataset.id}
+                    className="justify-between w-full px-3 py-2 flex items-center gap-2"
+                  >
+                    <Button
+                      variant={"link"}
+                      className="p-0"
+                      onClick={() => {
+                        handleClickDataset(templateDataset.datasetId);
+                      }}
+                    >
+                      <p>{templateDataset.dataset.name}</p>
+                    </Button>
+                    <Button
+                      className="flex-shirnk-0"
+                      onClick={() => {
+                        deleteTemplateDataset({
+                          templateId: templateObj.id,
+                          datasetId: templateDataset.datasetId,
+                        });
+                      }}
+                      variant="ghost"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

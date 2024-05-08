@@ -1,6 +1,7 @@
 import { useCreateCompletion } from "@/hooks/useCreateCompletion";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
+import { useCreateTemplateDataset } from "@/hooks/useTemplates";
 import { compile } from "@/lib/parser";
 import { cn, getNestedValue } from "@/lib/utils";
 import {
@@ -108,6 +109,8 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
     error: true,
   });
   const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
+  const { mutateAsync: createTemplateDataset } = useCreateTemplateDataset();
+
   const selectedResource = resources.find((r) => r.id === resourceId);
   const completionType = selectedResource?.completionType;
 
@@ -279,21 +282,35 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           }}
           parse={(value) => value}
         />
-        <Button
-          onClick={() => runAllCompletions()}
-          disabled={datasetItems.length === 0 || isRunningAllCompletions}
-          className="space-x-2"
-        >
-          {isRunningAllCompletions && (
-            <Loader2 size={16} className="animate-spin" />
-          )}
-          {!isRunningAllCompletions && (
-            <>
-              <Play size={16} />
-              <p>Run</p>
-            </>
-          )}
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            variant={"outline"}
+            onClick={() => {
+              createTemplateDataset({
+                datasetId: dataset.id,
+                templateId: template.id,
+              });
+            }}
+          >
+            <p>Connect to Template</p>
+          </Button>
+
+          <Button
+            onClick={() => runAllCompletions()}
+            disabled={datasetItems.length === 0 || isRunningAllCompletions}
+            className="space-x-2"
+          >
+            {isRunningAllCompletions && (
+              <Loader2 size={16} className="animate-spin" />
+            )}
+            {!isRunningAllCompletions && (
+              <>
+                <Play size={16} />
+                <p>Run</p>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
       <Card className="flex flex-col overflow-hidden h-full">
         <CardHeader className="h-auto p-2 border-b">

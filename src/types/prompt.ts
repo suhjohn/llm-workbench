@@ -2,6 +2,7 @@ import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { ChatMessageSchema } from "./chat";
+import { DatasetSchema } from "./dataset";
 import { LLMRequestBodySchema } from "./resource";
 import { getKeysFromUnionSchema } from "./util";
 
@@ -23,7 +24,20 @@ export const PromptTemplateSchema = z.object({
   updatedAt: z.string(),
 });
 
+export const PromptTemplateDatasetSchema = z.object({
+  id: z.string(),
+  promptTemplateId: z.string(),
+  datasetId: z.string(),
+  dataset: DatasetSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 export type PromptTemplateType = z.infer<typeof PromptTemplateSchema>;
+
+export type PromptTemplateDatasetType = z.infer<
+  typeof PromptTemplateDatasetSchema
+>;
 
 export const DEFAULT_TEMPLATE: PromptTemplateType = {
   id: uuidv4(),
