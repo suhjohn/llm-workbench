@@ -28,6 +28,7 @@ export default function IndexPage() {
   const datasetView = searchParams.get("datasetView") ?? "detail"; // list or detail
   const selectedTemplateId = searchParams.get("templateId");
   const selectedDatasetId = searchParams.get("datasetId");
+
   const [template, setTemplate] =
     useState<PromptTemplateType>(DEFAULT_TEMPLATE);
   const [dataset, setDataset] = useState<DatasetType>(DEFAULT_DATASET);
@@ -40,6 +41,9 @@ export default function IndexPage() {
     if (selectedTemplateId === template.id) {
       return;
     }
+    if (selectedTemplateId === null) {
+      setTemplate(DEFAULT_TEMPLATE);
+    }
     if (templates !== undefined && selectedTemplateId !== null) {
       const selectedTemplate = templates[selectedTemplateId];
       if (selectedTemplate) {
@@ -49,6 +53,9 @@ export default function IndexPage() {
   }, [template, selectedTemplateId, templates, setTemplate]);
 
   useEffect(() => {
+    if (selectedDatasetId === null) {
+      setDataset(DEFAULT_DATASET);
+    }
     if (datasets !== undefined && selectedDatasetId !== null) {
       const selectedDataset = datasets[selectedDatasetId];
       if (selectedDataset) {
@@ -57,6 +64,9 @@ export default function IndexPage() {
     }
   }, [selectedDatasetId, datasets, setDataset]);
   useEffect(() => {
+    if (selectedDatasetId === null) {
+      setDatasetItems([]);
+    }
     if (selectedDatasetId !== null && fetchedDatasetItems !== undefined) {
       setDatasetItems(fetchedDatasetItems);
     }
