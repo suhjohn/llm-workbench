@@ -85,14 +85,6 @@ export default function IndexPage() {
     if (selectedTemplateId === template.id) {
       return;
     }
-    if (selectedTemplateId === null) {
-      setTemplate({
-        ...DEFAULT_TEMPLATE,
-        id: uuidv4(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
     if (templates !== undefined && selectedTemplateId !== null) {
       const selectedTemplate = templates[selectedTemplateId];
       if (selectedTemplate) {
@@ -102,13 +94,6 @@ export default function IndexPage() {
   }, [template, selectedTemplateId, templates, setTemplate]);
 
   useEffect(() => {
-    if (selectedDatasetId === null) {
-      setDataset({
-        ...DEFAULT_DATASET,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
     if (datasets !== undefined && selectedDatasetId !== null) {
       const selectedDataset = datasets[selectedDatasetId];
       if (selectedDataset) {

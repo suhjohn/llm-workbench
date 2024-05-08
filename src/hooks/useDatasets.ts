@@ -3,6 +3,7 @@ import {
   DatasetItemSchema,
   DatasetItemType,
   DatasetSchema,
+  DatasetType,
   createDefaultDatasetItem,
 } from "@/types/dataset";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ export const useCreateDataset = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (dataset: { id: string; name: string }) => {
+    mutationFn: async (dataset: DatasetType) => {
       const datasets =
         (await localForageStore.getItem<{
           [x: string]: unknown;
