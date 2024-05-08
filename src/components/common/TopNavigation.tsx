@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import Link from "next/link";
 import { IoLogoGithub } from "react-icons/io";
 import { Button } from "../ui/button";
@@ -21,7 +22,9 @@ export const TopNavigation = () => {
         )}
       >
         <div className={cn("font-bold")}>
-          <Link href="/">PromptRepo</Link>
+          <Link href="/" className="flex space-x-2 items-center">
+            <p>PromptRepo</p>
+          </Link>
         </div>
         <div className="flex gap-2">
           <Button variant={"ghost"} className="p-0 px-1.5 py-1.5 h-8" asChild>
