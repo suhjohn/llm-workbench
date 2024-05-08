@@ -1,5 +1,6 @@
 "use client";
 import { TopNavigation } from "@/components/common/TopNavigation";
+import { useCookieConfigContext } from "@/hooks/useCookieContext";
 import {
   useBulkUpdateDatasetItems,
   useCreateDatasetItem,
@@ -26,7 +27,10 @@ import { Button } from "./ui/button";
 export default function IndexPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [width, setWidth] = useState<number>(0);
+  const { config, setConfig } = useCookieConfigContext();
+  const [width, setWidth] = useState<number>(
+    config.indexHorizontalDividerWidth ?? 0
+  );
   const isResized = useRef(false);
   useEffect(() => {
     window.addEventListener("mousemove", (e) => {
@@ -36,8 +40,17 @@ export default function IndexPage() {
       const env = process.env.NODE_ENV;
       const nextWidth =
         env === "development"
-          ? (prevWidth: number) => prevWidth - e.movementX
-          : (prevWidth: number) => prevWidth - e.movementX * 2; // * 2 is because the boxes are under flex and with flex-shrink you need this hack
+          ? (prevWidth: number) => {
+              const newWidth = prevWidth - e.movementX;
+              setConfig("indexHorizontalDividerWidth", newWidth);
+              return newWidth;
+            }
+          : (prevWidth: number) => {
+              // * 2 is because the boxes are under flex and with flex-shrink you need this hack
+              const newWidth = prevWidth - e.movementX * 2;
+              setConfig("indexHorizontalDividerWidth", newWidth);
+              return newWidth;
+            };
       setWidth(nextWidth);
     });
     window.addEventListener("mouseup", () => {
@@ -214,7 +227,7 @@ export default function IndexPage() {
           "md:p-2",
           "flex-col",
           "md:flex-row",
-          "overflow-hidden",
+          "overflow-hidden"
         )}
       >
         <div
@@ -238,6 +251,7 @@ export default function IndexPage() {
             variant="outline"
             onClick={() => {
               setWidth(0);
+              setConfig("indexHorizontalDividerWidth", 0);
             }}
           >
             <AlignHorizontalDistributeCenter size={12} />

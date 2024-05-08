@@ -1,5 +1,6 @@
 "use client";
 import { OpenAIChatCompletionResource } from "@/fixtures/resources";
+import { useCookieConfigContext } from "@/hooks/useCookieContext";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
 import {
@@ -57,6 +58,7 @@ export const TemplateSection: FC<TemplateSection> = ({
   } = templateObj;
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
+  const { config, setConfig } = useCookieConfigContext();
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedParameters = enabledParameters.reduce((acc, key) => {
@@ -172,8 +174,17 @@ export const TemplateSection: FC<TemplateSection> = ({
       </div>
       <Accordion
         type="multiple"
-        defaultValue={["prompt", "parameters", "datasets"]}
+        defaultValue={
+          config.indexTemplateOpenAccordion || [
+            "prompt",
+            "parameters",
+            "datasets",
+          ]
+        }
         className="w-full px-0 md:px-2"
+        onValueChange={(value) => {
+          setConfig("indexTemplateOpenAccordion", value);
+        }}
       >
         <AccordionItem value="prompt">
           <AccordionTrigger>

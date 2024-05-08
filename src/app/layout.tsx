@@ -1,9 +1,11 @@
 import { Inter } from "next/font/google";
-import { ReactQueryProvider } from "./reactQueryProvider";
+import { ReactQueryProvider } from "./ReactQueryProvider";
 
 import { Toaster } from "@/components/ui/toaster";
+import { getCookies } from "cookies-next";
 import { ThemeProvider } from "next-themes";
 import { cookies } from "next/headers";
+import { CookieProvider } from "./CookieProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,13 +23,18 @@ export default function RootLayout({
 }>) {
   const _cookies = cookies();
   const theme = _cookies.get("theme")?.value || "light";
+  const cookiesObj = getCookies({
+    cookies,
+  });
   return (
     <html lang="en" className={theme} suppressHydrationWarning>
       <body className={inter.className}>
         <ReactQueryProvider>
           <ThemeProvider attribute="class">
-            <main>{children}</main>
-            <Toaster />
+            <CookieProvider cookies={cookiesObj}>
+              <main>{children}</main>
+              <Toaster />
+            </CookieProvider>
           </ThemeProvider>
         </ReactQueryProvider>
       </body>
