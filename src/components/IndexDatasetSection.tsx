@@ -335,7 +335,18 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         "data-[state=open]:bg-accent"
                       )}
                     >
-                      <TableHead className="min-w-96">{param}</TableHead>
+                      <TableHead className={cn("min-w-96")}>
+                        <p
+                          className={cn(
+                            templatePromptParameters.includes(param) && [
+                              "font-bold",
+                              "text-foreground",
+                            ]
+                          )}
+                        >
+                          {param}
+                        </p>
+                      </TableHead>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
                       <ContextMenuItem
@@ -473,7 +484,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                       {columnVisibility.compiledInput === true && (
                         <TableCell
                           className={cn(
-                            "p-1",
+                            "p-2",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
@@ -492,8 +503,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                       {columnVisibility.output === true && (
                         <TableCell
                           className={cn(
-                            "py-1",
-                            "px-2",
+                            "p-2",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
@@ -522,7 +532,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                       {columnVisibility.error === true && (
                         <TableCell
                           className={cn(
-                            "p-1",
+                            "p-2",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
