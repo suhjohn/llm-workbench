@@ -29,16 +29,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 type TemplateSection = {
   template: PromptTemplateType;
   setTemplate: (template: PromptTemplateType) => void;
-  promptParameters: string[];
-  setPromptParameters: (parameters: string[]) => void;
   onClickBack?: () => void;
 };
 
 export const TemplateSection: FC<TemplateSection> = ({
   template: templateObj,
   setTemplate,
-  promptParameters,
-  setPromptParameters,
   onClickBack,
 }) => {
   const {
@@ -51,7 +47,10 @@ export const TemplateSection: FC<TemplateSection> = ({
   } = templateObj;
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
-  const [promptParametersError, setPromptParametersError] = useState<string | undefined>(undefined);
+  const [promptParameters, setPromptParameters] = useState<string[]>([]);
+  const [promptParametersError, setPromptParametersError] = useState<
+    string | undefined
+  >(undefined);
   const selectedParameters = enabledParameters.reduce((acc, key) => {
     acc[key] = llmParameters[key];
     return acc;
@@ -67,7 +66,7 @@ export const TemplateSection: FC<TemplateSection> = ({
       ...templateObj,
       promptTemplate: newPromptTemplate,
     });
-    try{
+    try {
       const newPromptParameters = getVariablesFromParameters({
         promptTemplate: newPromptTemplate,
         messagesTemplate: undefined,
@@ -78,7 +77,9 @@ export const TemplateSection: FC<TemplateSection> = ({
     } catch (e) {
       if (e instanceof Error) {
         console.error(`Error while setting prompt parameters: ${e.message}`);
-        setPromptParametersError(`Error while setting prompt parameters: ${e.message}`);
+        setPromptParametersError(
+          `Error while setting prompt parameters: ${e.message}`
+        );
       }
     }
   };
@@ -99,7 +100,9 @@ export const TemplateSection: FC<TemplateSection> = ({
     } catch (e) {
       if (e instanceof Error) {
         console.error(`Error while setting prompt parameters: ${e.message}`);
-        setPromptParametersError(`Error while setting prompt parameters: ${e.message}`);
+        setPromptParametersError(
+          `Error while setting prompt parameters: ${e.message}`
+        );
       }
     }
   };

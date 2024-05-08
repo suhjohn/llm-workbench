@@ -1,4 +1,5 @@
 import { useCreateCompletion } from "@/hooks/useCreateCompletion";
+import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
 import { compile } from "@/lib/parser";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ import {
   Plus,
   Trash2Icon,
 } from "lucide-react";
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
 import { Button } from "./ui/button";
@@ -46,7 +47,6 @@ import { useToast } from "./ui/use-toast";
 
 type DatasetSectionProps = {
   template: PromptTemplateType;
-  promptParameters: string[];
   dataset: DatasetType;
   setDataset: (dataset: DatasetType) => void;
   datasetItems: DatasetItemType[];
@@ -54,11 +54,11 @@ type DatasetSectionProps = {
     action: "update" | "delete" | "create";
     datasetItem: DatasetItemType;
   }) => void;
+  setDatasetItems: (datasetItems: DatasetItemType[]) => void;
   onClickBack?: () => void;
 };
 
 type TableDatasetItemType = {
-  promptParameters: Record<string, string>;
   compiledInput: Record<string, string>;
   output: string;
   error: string;
@@ -66,13 +66,14 @@ type TableDatasetItemType = {
 
 export const DatasetSection: FC<DatasetSectionProps> = ({
   template,
-  promptParameters,
   dataset,
   setDataset,
   datasetItems,
   setDatasetItem,
+  setDatasetItems,
   onClickBack,
 }) => {
+  const getVariablesFromParameters = useGetVariablesCallback();
   const {
     resourceId,
     llmParameters,
@@ -80,12 +81,23 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
     messagesTemplate,
     enabledParameters,
   } = template;
+  const templatePromptParameters = useMemo(() => {
+    try {
+      return getVariablesFromParameters({
+        promptTemplate,
+        messagesTemplate,
+        parser: "mustache",
+      });
+    } catch (e) {
+      return [];
+    }
+  }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
+
   const { toast } = useToast();
   const { data: resources } = useResources();
   const [columnVisibility, setColumnVisibility] = useState<
     Record<keyof TableDatasetItemType, boolean>
   >({
-    promptParameters: true,
     compiledInput: false,
     output: true,
     error: true,
@@ -177,6 +189,50 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       },
     });
 
+  const handleAddColumns = ({ columns }: { columns: string[] }) => {
+    const diff = columns.filter(
+      (column) => !dataset.parameters.includes(column)
+    );
+    setDataset({
+      ...dataset,
+      parameters: [...dataset.parameters, ...diff],
+    });
+    toast({
+      title: `Added column${diff.length > 1 ? "s" : ""}`,
+      description: `Added ${JSON.stringify(diff)} successfully.`,
+    });
+  };
+
+  const handleRemoveColumns = ({ columns }: { columns: string[] }) => {
+    const diff = dataset.parameters.filter(
+      (column) => !columns.includes(column)
+    );
+    setDataset({
+      ...dataset,
+      parameters: diff,
+    });
+    setDatasetItems(
+      datasetItems.map((item) => {
+        const newPromptParameters = Object.fromEntries(
+          Object.entries(item.promptParameters).filter(
+            ([key, _]) => !columns.includes(key)
+          )
+        );
+        return {
+          ...item,
+          promptParameters: newPromptParameters,
+        };
+      })
+    );
+    toast({
+      title: `Removed column${columns.length > 1 ? "s" : ""}`,
+      description: `Removed ${JSON.stringify(columns)} successfully.`,
+    });
+  };
+
+  const newPromptParametersExists = templatePromptParameters.some(
+    (param) => !dataset.parameters.includes(param)
+  );
   return (
     <div className="flex flex-col w-full h-full space-y-2 overflow-hidden">
       <div className="w-full flex space-x-2 justify-between">
@@ -216,9 +272,9 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
         </Button>
       </div>
       <Card className="flex flex-col overflow-hidden h-full">
-        <CardHeader className="h-auto p-4 border-b">
+        <CardHeader className="h-auto p-2 border-b">
           <div className="flex justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 className="space-x-2"
@@ -227,6 +283,17 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 <Plus size={16} />
                 <p>Add item</p>
               </Button>
+              {newPromptParametersExists && (
+                <Button
+                  variant="outline"
+                  className="space-x-2"
+                  onClick={() =>
+                    handleAddColumns({ columns: templatePromptParameters })
+                  }
+                >
+                  <p>Sync parameters</p>
+                </Button>
+              )}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -256,13 +323,38 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
         </CardHeader>
         <CardContent className="flex flex-col overflow-hidden h-full p-0">
           <Table className="w-full h-full flex-shrink-0 overflow-auto">
-            <TableHeader className="border-b">
+            <TableHeader className={cn("border-b")}>
               <TableRow>
-                {promptParameters.map((param) => (
-                  <TableHead key={param} className="min-w-96">
-                    {param}
-                  </TableHead>
+                <TableHead />
+                {dataset.parameters.map((param) => (
+                  <ContextMenu key={param}>
+                    <ContextMenuTrigger
+                      asChild
+                      className={cn(
+                        "hover:bg-accent",
+                        "data-[state=open]:bg-accent"
+                      )}
+                    >
+                      <TableHead className="min-w-96">{param}</TableHead>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem
+                        onClick={() =>
+                          handleRemoveColumns({ columns: [param] })
+                        }
+                        disabled={isPending}
+                        className="space-x-2 text-red-500"
+                      >
+                        <Trash2Icon size={16} />
+                        <p>Delete column</p>
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 ))}
+                {/* Vertical divider */}
+                {dataset.parameters.length > 0 && (
+                  <TableHead className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableHead>
+                )}
                 {columnVisibility.compiledInput === true && (
                   <TableHead className="min-w-96">Compiled Input</TableHead>
                 )}
@@ -275,11 +367,28 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody className="w-full h-full overflow-auto">
-              {datasetItems.map((datasetItem) => (
+              {datasetItems.map((datasetItem, index) => (
                 <ContextMenu key={datasetItem.id}>
-                  <ContextMenuTrigger asChild>
+                  <ContextMenuTrigger
+                    asChild
+                    className={cn(
+                      "hover:bg-accent",
+                      "data-[state=open]:bg-accent"
+                    )}
+                  >
                     <TableRow>
-                      {promptParameters.map((promptParameter) => (
+                      <TableCell>
+                        <p
+                          className={cn(
+                            "text-sm",
+                            "text-muted-foreground",
+                            "dark:text-muted-foreground"
+                          )}
+                        >
+                          {index + 1}
+                        </p>
+                      </TableCell>
+                      {dataset.parameters.map((promptParameter) => (
                         <TableCell
                           key={promptParameter}
                           className={cn(
@@ -299,7 +408,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                               "border-transparent",
                               "hover:border-gray-200",
                               "dark:hover:border-gray-700",
-                              "rounded-md",
+                              "rounded-md"
                             )}
                             textAreaProps={{
                               className: cn(
@@ -357,6 +466,10 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                           />
                         </TableCell>
                       ))}
+                      {/* Vertical divider */}
+                      {dataset.parameters.length > 0 && (
+                        <TableCell className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableCell>
+                      )}
                       {columnVisibility.compiledInput === true && (
                         <TableCell
                           className={cn(
@@ -379,7 +492,8 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                       {columnVisibility.output === true && (
                         <TableCell
                           className={cn(
-                            "p-1",
+                            "py-1",
+                            "px-2",
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
@@ -389,7 +503,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                           <p
                             className={cn([
                               "overflow-y-auto",
-                              "max-h-64",
+                              "max-h-40",
                               "whitespace-pre-wrap",
                               (datasetItem.output === undefined ||
                                 datasetItem.output === "") && [
@@ -401,7 +515,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                             {datasetItem.output === undefined ||
                             datasetItem.output === ""
                               ? "No output."
-                              : datasetItem.output}
+                              : JSON.stringify(datasetItem.output, null, 2)}
                           </p>
                         </TableCell>
                       )}
@@ -439,7 +553,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                       className="space-x-2 text-red-500"
                     >
                       <Trash2Icon size={16} />
-                      <p>Delete</p>
+                      <p>Delete Row</p>
                     </ContextMenuItem>
                   </ContextMenuContent>
                 </ContextMenu>

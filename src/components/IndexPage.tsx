@@ -1,6 +1,7 @@
 "use client";
 import { TopNavigation } from "@/components/common/TopNavigation";
 import {
+  useBulkUpdateDatasetItems,
   useCreateDatasetItem,
   useDatasetItems,
   useDatasets,
@@ -8,7 +9,6 @@ import {
   useUpdateDataset,
   useUpdateDatasetItem,
 } from "@/hooks/useDatasets";
-import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetItemType, DatasetType } from "@/types/dataset";
@@ -30,13 +30,11 @@ export default function IndexPage() {
   const selectedDatasetId = searchParams.get("datasetId");
   const [template, setTemplate] =
     useState<PromptTemplateType>(DEFAULT_TEMPLATE);
-  const [promptParameters, setPromptParameters] = useState<string[]>([]);
   const [dataset, setDataset] = useState<DatasetType>(DEFAULT_DATASET);
   const [datasetItems, setDatasetItems] = useState<DatasetItemType[]>([]);
   const { data: templates } = useTemplates();
   const { data: datasets } = useDatasets();
   const { data: fetchedDatasetItems } = useDatasetItems(selectedDatasetId);
-  const getVariablesFromParameters = useGetVariablesCallback();
 
   useEffect(() => {
     if (selectedTemplateId === template.id) {
@@ -46,29 +44,9 @@ export default function IndexPage() {
       const selectedTemplate = templates[selectedTemplateId];
       if (selectedTemplate) {
         setTemplate(selectedTemplate);
-        try {
-          setPromptParameters(
-            getVariablesFromParameters({
-              messagesTemplate: selectedTemplate.messagesTemplate,
-              promptTemplate: selectedTemplate.promptTemplate,
-              parser: "mustache",
-            })
-          );
-        } catch (e) {
-          console.error(
-            `[IndexPage.tsx] Error setting prompt parameters: ${e}`
-          );
-        }
       }
     }
-  }, [
-    template,
-    selectedTemplateId,
-    templates,
-    setTemplate,
-    setPromptParameters,
-    getVariablesFromParameters,
-  ]);
+  }, [template, selectedTemplateId, templates, setTemplate]);
 
   useEffect(() => {
     if (datasets !== undefined && selectedDatasetId !== null) {
@@ -87,6 +65,7 @@ export default function IndexPage() {
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { mutateAsync: updateDataset } = useUpdateDataset();
   const { mutateAsync: updateDatasetItem } = useUpdateDatasetItem();
+  const { mutateAsync: bulkUpdateDatasetItems } = useBulkUpdateDatasetItems();
   const { mutateAsync: createDatasetItem } = useCreateDatasetItem();
   const { mutateAsync: deleteDatasetItem } = useDeleteDatasetItem();
 
@@ -179,6 +158,16 @@ export default function IndexPage() {
     }
   };
 
+  const handleBulkUpdateDatasetItems = (datasetItems: DatasetItemType[]) => {
+    setDatasetItems((prev) =>
+      prev.map((item) => {
+        const newItem = datasetItems.find((newItem) => newItem.id === item.id);
+        return newItem ?? item;
+      })
+    );
+    bulkUpdateDatasetItems(datasetItems);
+  };
+
   return (
     <div className={"flex relative flex-col space-y-0 md:h-[100dvh] w-[100vw]"}>
       <TopNavigation />
@@ -209,8 +198,6 @@ export default function IndexPage() {
             <TemplateSection
               template={template}
               setTemplate={handleUpdateTemplate}
-              promptParameters={promptParameters}
-              setPromptParameters={setPromptParameters}
               onClickBack={handleClickBackTemplate}
             />
           )}
@@ -222,10 +209,10 @@ export default function IndexPage() {
           {datasetView === "detail" && (
             <DatasetSection
               dataset={dataset}
-              promptParameters={promptParameters}
               setDataset={handleUpdateDataset}
               datasetItems={datasetItems}
               setDatasetItem={handleUpdateDatasetItem}
+              setDatasetItems={handleBulkUpdateDatasetItems}
               template={template}
               onClickBack={handleClickBackDataset}
             />

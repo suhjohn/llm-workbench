@@ -5,6 +5,7 @@ export const DatasetSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
+  parameters: z.array(z.string()),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -27,6 +28,7 @@ export const DEFAULT_DATASET: DatasetType = {
   id: uuidv4(),
   name: "",
   description: "",
+  parameters: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

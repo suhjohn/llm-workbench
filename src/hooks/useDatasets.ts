@@ -160,6 +160,26 @@ export const useUpdateDatasetItem = () => {
   });
 };
 
+export const useBulkUpdateDatasetItems = () => {
+  return useMutation({
+    mutationFn: async (datasetItems: DatasetItemType[]) => {
+      datasetItems.forEach(async (datasetItem) => {
+        const datasetItems =
+          (await localForageStore.getItem<{
+            [x: string]: unknown;
+          }>(`${getDatasetItemStorageKey(datasetItem.datasetId)}`)) ?? {};
+        await localForageStore.setItem(
+          `${getDatasetItemStorageKey(datasetItem.datasetId)}`,
+          {
+            ...datasetItems,
+            [datasetItem.id]: datasetItem,
+          }
+        );
+      });
+    },
+  });
+}
+
 export const useDeleteDatasetItem = () => {
   const queryClient = useQueryClient();
 
