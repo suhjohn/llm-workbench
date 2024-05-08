@@ -172,7 +172,7 @@ export const TemplateSection: FC<TemplateSection> = ({
       </div>
       <Accordion
         type="multiple"
-        defaultValue={["prompt", "parameters"]}
+        defaultValue={["prompt", "parameters", "datasets"]}
         className="w-full px-0 md:px-2"
       >
         <AccordionItem value="prompt">
