@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Settings, Sun } from "lucide-react";
+import { Loader2, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import {
@@ -32,13 +32,11 @@ export function ThemeToggle() {
       icon: <Settings size={16} />,
     },
   ];
-  if (!isMounted) {
-    return null;
-  }
+  const currentTheme = isMounted ? theme : "system";
 
   return (
     <Select
-      value={isMounted ? theme : "system"}
+      value={currentTheme}
       defaultValue="system"
       onValueChange={(value) => {
         setTheme(value);
@@ -46,7 +44,9 @@ export function ThemeToggle() {
     >
       <SelectTrigger className="w-auto">
         <SelectValue>
-          {options.find((option) => option.value === theme)?.icon}
+          {!isMounted && <Loader2 size={16} className="animate-spin" />}
+          {isMounted &&
+            options.find((option) => option.value === currentTheme)?.icon}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
