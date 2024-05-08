@@ -205,6 +205,7 @@ export default function IndexPage() {
       <div
         className={cn(
           "w-full",
+          "h-full",
           "flex",
           "gap-4",
           "p-4",
@@ -214,7 +215,6 @@ export default function IndexPage() {
           "flex-col",
           "md:flex-row",
           "overflow-hidden",
-          "flex-shrink-0"
         )}
       >
         <div
