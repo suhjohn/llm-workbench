@@ -17,7 +17,7 @@ export const DatasetItemSchema = z.object({
   datasetId: z.string(),
   promptParameters: z.record(z.string(), z.string()),
   error: z.string().nullable(),
-  output: z.string(),
+  output: z.any(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

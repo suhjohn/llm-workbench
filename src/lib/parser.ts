@@ -1,6 +1,10 @@
 import { ChatMessage } from "@/types/chat";
 import Mustache from "mustache";
 
+Mustache.escape = function (text) {
+  return text;
+};
+
 const getMustacheVariables = (template: string) => {
   return Mustache.parse(template)
     .filter(function (v) {

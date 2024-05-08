@@ -178,7 +178,7 @@ export const useBulkUpdateDatasetItems = () => {
       });
     },
   });
-}
+};
 
 export const useDeleteDatasetItem = () => {
   const queryClient = useQueryClient();
