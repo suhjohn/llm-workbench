@@ -13,17 +13,38 @@ import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetItemType, DatasetType } from "@/types/dataset";
 import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
+import { AlignHorizontalDistributeCenter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { DatasetList } from "./DatasetList";
 import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
 import { TemplateList } from "./TemplateList";
+import { Button } from "./ui/button";
 
 export default function IndexPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [width, setWidth] = useState<number>(0);
+  const isResized = useRef(false);
+  useEffect(() => {
+    window.addEventListener("mousemove", (e) => {
+      if (!isResized.current) {
+        return;
+      }
+      const env = process.env.NODE_ENV;
+      const nextWidth =
+        env === "development"
+          ? (prevWidth: number) => prevWidth - e.movementX
+          : (prevWidth: number) => prevWidth - e.movementX * 2; // * 2 is because the boxes are under flex and with flex-shrink you need this hack
+      setWidth(nextWidth);
+    });
+    window.addEventListener("mouseup", () => {
+      isResized.current = false;
+    });
+  }, []);
+
   const templateView = searchParams.get("templateView") ?? "detail"; // list or detail
   const datasetView = searchParams.get("datasetView") ?? "detail"; // list or detail
   const selectedTemplateId = searchParams.get("templateId");
@@ -192,17 +213,13 @@ export default function IndexPage() {
           "md:p-2",
           "flex-col",
           "md:flex-row",
-          "overflow-hidden"
+          "overflow-hidden",
+          "flex-shrink-0"
         )}
       >
         <div
-          className={cn(
-            "w-full",
-            "h-full",
-            "flex",
-            "space-x-2",
-            "overflow-hidden"
-          )}
+          className={cn("w-full", "flex", "space-x-2", "overflow-hidden")}
+          style={{ width: `calc(100% - ${width}px)` }}
         >
           {templateView === "list" && (
             <TemplateList onClickTemplate={handleClickTemplate} />
@@ -215,6 +232,23 @@ export default function IndexPage() {
             />
           )}
         </div>
+        <div className="hidden md:flex space-y-2 h-full flex-col items-center">
+          <Button
+            className="w-auto px-1.5 py-1.5 w-auto h-auto"
+            variant="outline"
+            onClick={() => {
+              setWidth(0);
+            }}
+          >
+            <AlignHorizontalDistributeCenter size={12} />
+          </Button>
+          <div
+            className="mx-[2px] h-full w-[2px] cursor-pointer bg-muted hover:bg-blue-500 flex flex-shrink-0"
+            onMouseDown={() => {
+              isResized.current = true;
+            }}
+          />
+        </div>
         <div
           className={cn(
             "w-full",
@@ -225,6 +259,7 @@ export default function IndexPage() {
             "min-h-96",
             "md:min-h-auto"
           )}
+          style={{ width: `calc(100% + ${width}px)` }}
         >
           {datasetView === "list" && (
             <DatasetList onClickDataset={handleClickDataset} />
