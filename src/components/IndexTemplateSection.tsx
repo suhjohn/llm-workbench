@@ -8,7 +8,7 @@ import { json } from "@codemirror/lang-json";
 import { ChevronLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { FC, useState } from "react";
+import { FC, useMemo } from "react";
 import { ClickableInput } from "./common/ClickableInput";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
 import { PromptInput } from "./common/PromptInput";
@@ -52,41 +52,47 @@ export const TemplateSection: FC<TemplateSection> = ({
   } = templateObj;
   const { data: resources } = useResources();
   const { resolvedTheme } = useTheme();
-  const [promptParameters, setPromptParameters] = useState<string[]>([]);
-  const [promptParametersError, setPromptParametersError] = useState<
-    string | undefined
-  >(undefined);
   const selectedParameters = enabledParameters.reduce((acc, key) => {
     acc[key] = llmParameters[key];
     return acc;
   }, {} as Record<string, any>);
   const selectedResource = resources.find((r) => r.id === resourceId);
-
   const completionType = selectedResource?.completionType;
-
   const getVariablesFromParameters = useGetVariablesCallback();
+
+  const promptParameters = useMemo(() => {
+    try {
+      return getVariablesFromParameters({
+        promptTemplate,
+        messagesTemplate,
+        parser: "mustache",
+      });
+    } catch (e) {
+      return [];
+    }
+  }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
+
+  const promptParametersError = useMemo(() => {
+    try {
+      getVariablesFromParameters({
+        promptTemplate,
+        messagesTemplate,
+        parser: "mustache",
+      });
+      return undefined;
+    } catch (e) {
+      if (e instanceof Error) {
+        return e.message;
+      }
+      return "Error while setting prompt arguments";
+    }
+  }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
 
   const handleSetPromptTemplate = (newPromptTemplate: string) => {
     setTemplate({
       ...templateObj,
       promptTemplate: newPromptTemplate,
     });
-    try {
-      const newPromptParameters = getVariablesFromParameters({
-        promptTemplate: newPromptTemplate,
-        messagesTemplate: undefined,
-        parser: "mustache",
-      });
-      setPromptParameters(newPromptParameters);
-      setPromptParametersError(undefined);
-    } catch (e) {
-      if (e instanceof Error) {
-        console.error(`Error while setting prompt parameters: ${e.message}`);
-        setPromptParametersError(
-          `Error while setting prompt parameters: ${e.message}`
-        );
-      }
-    }
   };
 
   const handleSetMessagesTemplate = (newMessagesTemplate: ChatMessage[]) => {
@@ -94,22 +100,6 @@ export const TemplateSection: FC<TemplateSection> = ({
       ...templateObj,
       messagesTemplate: newMessagesTemplate,
     });
-    try {
-      const newPromptParameters = getVariablesFromParameters({
-        promptTemplate: undefined,
-        messagesTemplate: newMessagesTemplate,
-        parser: "mustache",
-      });
-      setPromptParameters(newPromptParameters);
-      setPromptParametersError(undefined);
-    } catch (e) {
-      if (e instanceof Error) {
-        console.error(`Error while setting prompt parameters: ${e.message}`);
-        setPromptParametersError(
-          `Error while setting prompt parameters: ${e.message}`
-        );
-      }
-    }
   };
 
   return (
@@ -173,7 +163,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             <div className="flex flex-col gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Use mustache syntax to define variables. e.g.
+                  Use mustache syntax to define prompt arguments. e.g.
                   {"Respond to the user's message: {{ user_input }}"}
                 </p>
                 <p className="text-sm">
@@ -206,7 +196,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                       : undefined
                   }
                 />
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-1 items-center">
                   {promptParametersError && (
                     <p className="text-red-500 text-sm">
                       {promptParametersError}
@@ -215,11 +205,11 @@ export const TemplateSection: FC<TemplateSection> = ({
                   {promptParametersError === undefined && (
                     <>
                       <span className="text-muted-foreground text-sm">
-                        Variables:
+                        Prompt arguments:
                       </span>
                       {promptParameters.length === 0 && (
                         <span className="italic text-muted-foreground text-sm">
-                          No variables found.
+                          No arguments found.
                         </span>
                       )}
                       {promptParameters.map((parameter) => (

@@ -315,7 +315,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                     handleAddColumns({ columns: templatePromptParameters })
                   }
                 >
-                  <p>Sync parameters</p>
+                  <p>Sync arguments</p>
                 </Button>
               )}
             </div>
