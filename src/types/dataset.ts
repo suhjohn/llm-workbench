@@ -5,42 +5,40 @@ export const DatasetSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  parameters: z.array(z.string()),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 
 export type DatasetType = z.infer<typeof DatasetSchema>;
 
-export const DatasetItemSchema = z.object({
+export const OutputFieldSchema = z.object({
+  name: z.string(),
+  path: z.string(),
+});
+
+export type OutputFieldType = z.infer<typeof OutputFieldSchema>;
+
+export const DatasetDataRowSchema = z.object({
+  id: z.string(),
+  arguments: z.record(z.string(), z.string()),
+});
+
+export const DatasetDataSchema = z.object({
   id: z.string(),
   datasetId: z.string(),
-  promptParameters: z.record(z.string(), z.string()),
-  error: z.string().nullable(),
-  output: z.any(),
+  parameterFields: z.array(z.string()),
+  outputFields: z.array(OutputFieldSchema),
+  data: z.array(DatasetDataRowSchema),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 
-export type DatasetItemType = z.infer<typeof DatasetItemSchema>;
+export type DatasetDataType = z.infer<typeof DatasetDataSchema>;
 
 export const DEFAULT_DATASET: DatasetType = {
   id: uuidv4(),
-  name: "",
+  name: "New dataset",
   description: "",
-  parameters: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
-
-export const createDefaultDatasetItem = (
-  datasetId: string
-): DatasetItemType => ({
-  id: uuidv4(),
-  datasetId,
-  promptParameters: {},
-  error: "",
-  output: "",
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-});

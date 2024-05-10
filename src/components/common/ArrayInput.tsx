@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useState } from "react";
+import { ChangeEvent, FC, useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { cn } from "@/lib/utils";
@@ -12,13 +12,11 @@ function hasOnlyDigits(value: string) {
 
 type ArrayInputProps = {
   value: string;
-  readOnly: boolean;
   onChange: (value: string) => void;
-  onArrayChange: (array: (string | number)[]) => void;
+  onArrayChange?: (array: (string | number)[]) => void;
 };
 export const ArrayInput: FC<ArrayInputProps> = ({
   value,
-  readOnly,
   onChange,
   onArrayChange,
 }): JSX.Element => {
@@ -40,6 +38,9 @@ export const ArrayInput: FC<ArrayInputProps> = ({
   const [array, setArray] = useState<(string | number)[]>(
     value.split(",").map((item) => tryParseInt(item))
   );
+  useEffect(() => {
+    setArray(value.split(",").map((item) => tryParseInt(item)));
+  }, [value]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
@@ -47,7 +48,7 @@ export const ArrayInput: FC<ArrayInputProps> = ({
       .split(",")
       .map((item) => tryParseInt(item));
     setArray(newArray);
-    onArrayChange(newArray);
+    onArrayChange?.(newArray);
   };
   const isEmpty = value === "";
   return (

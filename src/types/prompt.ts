@@ -41,7 +41,7 @@ export type PromptTemplateDatasetType = z.infer<
 
 export const DEFAULT_TEMPLATE: PromptTemplateType = {
   id: uuidv4(),
-  name: "",
+  name: "New template",
   resourceId: OpenAIChatCompletionResource.id,
   llmParameters: {},
   promptTemplate: "",

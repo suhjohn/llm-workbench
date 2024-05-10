@@ -1,14 +1,12 @@
 import { useCreateCompletion } from "@/hooks/useCreateCompletion";
+import { useCreateDatasetRun, useDatasetRuns } from "@/hooks/useDatasetRuns";
+import { useDatasetObjById } from "@/hooks/useDatasets";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
 import { useCreateTemplateDataset } from "@/hooks/useTemplates";
 import { compile } from "@/lib/parser";
 import { cn, getNestedValue } from "@/lib/utils";
-import {
-  DatasetItemType,
-  DatasetType,
-  createDefaultDatasetItem,
-} from "@/types/dataset";
+import { DatasetType, OutputFieldType } from "@/types/dataset";
 import { JsonValue } from "@/types/json";
 import { PromptTemplateType } from "@/types/prompt";
 import { useMutation } from "@tanstack/react-query";
@@ -21,6 +19,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { ArrayInput } from "./common/ArrayInput";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
@@ -47,17 +46,12 @@ import {
   TableRow,
 } from "./ui/table";
 import { useToast } from "./ui/use-toast";
+import { IndexDatasetTemplateRunDialog } from "./IndexDatasetTemplateRunDialog";
 
 type DatasetSectionProps = {
   template: PromptTemplateType;
   dataset: DatasetType;
   setDataset: (dataset: DatasetType) => void;
-  datasetItems: DatasetItemType[];
-  setDatasetItem: (args: {
-    action: "update" | "delete" | "create";
-    datasetItem: DatasetItemType;
-  }) => void;
-  setDatasetItems: (datasetItems: DatasetItemType[]) => void;
   onClickBack?: () => void;
 };
 
@@ -71,11 +65,25 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   template,
   dataset,
   setDataset,
-  datasetItems,
-  setDatasetItem,
-  setDatasetItems,
   onClickBack,
 }) => {
+  const {
+    datasetObj,
+    addColumns,
+    removeColumns,
+    updateOutputField,
+    createRow,
+    updateRow,
+    deleteRow,
+  } = useDatasetObjById({
+    datasetId: dataset.id,
+  });
+
+  const { mutateAsync: createDatasetRun } = useCreateDatasetRun();
+  const { data: datasetRunMap } = useDatasetRuns({
+    datasetId: dataset.id,
+    templateId: template.id,
+  });
   const getVariablesFromParameters = useGetVariablesCallback();
   const {
     resourceId,
@@ -95,10 +103,6 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       return [];
     }
   }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
-  const [outputPath, setOutputPath] = useState<string>("");
-  const [outputPathArray, setOutputPathArray] = useState<(string | number)[]>(
-    []
-  );
   const { toast } = useToast();
   const { data: resources } = useResources();
   const [columnVisibility, setColumnVisibility] = useState<
@@ -108,24 +112,37 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
     output: true,
     error: true,
   });
+  const [completionLoaderMap, setCompletionLoaderMap] = useState<{
+    [key: string]: boolean;
+  }>({});
   const { mutateAsync: createCompletion, isPending } = useCreateCompletion();
   const { mutateAsync: createTemplateDataset } = useCreateTemplateDataset();
 
   const selectedResource = resources.find((r) => r.id === resourceId);
   const completionType = selectedResource?.completionType;
 
-  const getDatasetItemOutput = (datasetItem: DatasetItemType) => {
-    let res: JsonValue | undefined = "No output.";
-    if (datasetItem.output === undefined || datasetItem.output === "") {
-      return res;
+  const getDatasetItemOutput = ({
+    outputField,
+    datasetRowId,
+  }: {
+    outputField: OutputFieldType;
+    datasetRowId: string;
+  }) => {
+    const latestRun = datasetRunMap?.[datasetRowId];
+    if (latestRun === undefined) {
+      return "";
     }
-    if (outputPath === "") {
-      res = datasetItem.output;
+    if (latestRun.output === undefined || latestRun.output === "") {
+      return "";
+    }
+    let res: JsonValue;
+    if (outputField.path === "") {
+      res = latestRun.output;
     } else {
-      res = getNestedValue(datasetItem.output, outputPathArray);
+      res = getNestedValue(latestRun.output, outputField.path.split(",")) ?? "";
     }
     if (res === undefined) {
-      return JSON.stringify(datasetItem.output, null, 2);
+      return JSON.stringify(latestRun.output, null, 2);
     }
     if (typeof res === "object") {
       return JSON.stringify(res, null, 2);
@@ -133,7 +150,21 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
     return res;
   };
 
-  const getParsedParameters = useCallback(
+  const getDatasetItemError = (datasetRowId: string) => {
+    const latestRun = datasetRunMap?.[datasetRowId];
+    if (latestRun === undefined) {
+      return "";
+    }
+    if (latestRun.error === undefined || latestRun.error === "") {
+      return "";
+    }
+    if (latestRun.output === undefined) {
+      return "There was an error running the completion.";
+    }
+    return latestRun?.error;
+  };
+
+  const getParsedArguments = useCallback(
     (promptParameters: Record<string, string>) => {
       let params = enabledParameters.reduce((acc, key) => {
         acc[key] = llmParameters[key];
@@ -168,62 +199,63 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       completionType,
     ]
   );
-  const handleAddDatasetItem = () => {
-    setDatasetItem({
-      action: "create",
-      datasetItem: createDefaultDatasetItem(dataset.id),
-    });
-  };
 
-  const handleCreateCompletion = async (datasetItemId: string) => {
-    const datasetItem = datasetItems.find((item) => item.id === datasetItemId);
-    if (datasetItem === undefined) {
+  const handleCreateCompletion = async (index: number) => {
+    const datasetItem = datasetObj.data[index];
+    if (!datasetItem) {
       return;
     }
-    const parsedParameters = getParsedParameters(datasetItem.promptParameters);
+    setCompletionLoaderMap((prev) => ({
+      ...prev,
+      [datasetItem.id]: true,
+    }));
+    const parsedParameters = getParsedArguments(datasetItem.arguments);
     try {
       const response = await createCompletion({
         resourceId,
         params: parsedParameters,
       });
-      setDatasetItem({
-        action: "update",
-        datasetItem: {
-          ...datasetItem,
-          output: response,
-          error: "",
-        },
+      await createDatasetRun({
+        id: uuidv4(),
+        templateId: template.id,
+        datasetId: dataset.id,
+        datasetRowId: datasetItem.id,
+        output: response,
+        error: "",
       });
     } catch (e) {
-      if (e instanceof Error)
-        setDatasetItem({
-          action: "update",
-          datasetItem: {
-            ...datasetItem,
-            output: "",
-            error: e.message,
-          },
+      if (e instanceof Error) {
+        await createDatasetRun({
+          id: uuidv4(),
+          templateId: template.id,
+          datasetId: dataset.id,
+          datasetRowId: datasetItem.id,
+          output: "",
+          error: e.message,
         });
+      }
+    } finally {
+      setCompletionLoaderMap((prev) => ({
+        ...prev,
+        [datasetItem.id]: false,
+      }));
     }
   };
 
   const { mutateAsync: runAllCompletions, isPending: isRunningAllCompletions } =
     useMutation({
       mutationFn: async () => {
-        for (const datasetItem of datasetItems) {
-          await handleCreateCompletion(datasetItem.id);
+        for (let i = 0; i < datasetObj.data.length; i++) {
+          await handleCreateCompletion(i);
         }
       },
     });
 
   const handleAddColumns = ({ columns }: { columns: string[] }) => {
     const diff = columns.filter(
-      (column) => !dataset.parameters.includes(column)
+      (column) => !datasetObj.parameterFields.includes(column)
     );
-    setDataset({
-      ...dataset,
-      parameters: [...dataset.parameters, ...diff],
-    });
+    addColumns(columns);
     toast({
       title: `Added column${diff.length > 1 ? "s" : ""}`,
       description: `Added ${JSON.stringify(diff)} successfully.`,
@@ -231,34 +263,32 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   };
 
   const handleRemoveColumns = ({ columns }: { columns: string[] }) => {
-    const diff = dataset.parameters.filter(
-      (column) => !columns.includes(column)
-    );
-    setDataset({
-      ...dataset,
-      parameters: diff,
-    });
-    setDatasetItems(
-      datasetItems.map((item) => {
-        const newPromptParameters = Object.fromEntries(
-          Object.entries(item.promptParameters).filter(
-            ([key, _]) => !columns.includes(key)
-          )
-        );
-        return {
-          ...item,
-          promptParameters: newPromptParameters,
-        };
-      })
-    );
+    removeColumns(columns);
     toast({
       title: `Removed column${columns.length > 1 ? "s" : ""}`,
       description: `Removed ${JSON.stringify(columns)} successfully.`,
     });
   };
 
+  const handleUpdateRow = async (
+    index: number,
+    updatedData: Record<string, string>
+  ) => {
+    try {
+      await updateRow(index, updatedData);
+    } catch (e) {
+      if (e instanceof Error) {
+        toast({
+          title: "Error",
+          description: e.message,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const newPromptParametersExists = templatePromptParameters.some(
-    (param) => !dataset.parameters.includes(param)
+    (param) => !datasetObj.parameterFields.includes(param)
   );
   return (
     <div className="flex flex-col w-full h-full space-y-2 overflow-hidden">
@@ -292,12 +322,12 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
               });
             }}
           >
-            <p>Connect to Template</p>
+            <p>Connect template</p>
           </Button>
 
           <Button
             onClick={() => runAllCompletions()}
-            disabled={datasetItems.length === 0 || isRunningAllCompletions}
+            disabled={datasetObj.data.length === 0 || isRunningAllCompletions}
             className="space-x-2"
           >
             {isRunningAllCompletions && (
@@ -319,7 +349,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
               <Button
                 variant="outline"
                 className="space-x-2"
-                onClick={handleAddDatasetItem}
+                onClick={createRow}
               >
                 <Plus size={16} />
                 <p>Add item</p>
@@ -367,7 +397,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
             <TableHeader className={cn("border-b")}>
               <TableRow>
                 <TableHead />
-                {dataset.parameters.map((param) => (
+                {datasetObj.parameterFields.map((param) => (
                   <ContextMenu key={param}>
                     <ContextMenuTrigger
                       asChild
@@ -404,31 +434,39 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                   </ContextMenu>
                 ))}
                 {/* Vertical divider */}
-                {dataset.parameters.length > 0 && (
+                {datasetObj.parameterFields.length > 0 && (
                   <TableHead className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableHead>
                 )}
                 {columnVisibility.compiledInput === true && (
                   <TableHead className="min-w-96">Compiled Input</TableHead>
                 )}
-                {columnVisibility.output === true && (
-                  <TableHead className="flex space-x-2 items-center min-w-96">
-                    <p>Output</p>
-                    <ArrayInput
-                      value={outputPath}
-                      readOnly={false}
-                      onChange={setOutputPath}
-                      onArrayChange={setOutputPathArray}
-                    />
-                  </TableHead>
+                {datasetObj.outputFields.map(
+                  (outputField, outputFieldIndex) => (
+                    <TableHead
+                      key={outputField.name}
+                      className="flex items-center space-x-2 min-w-96"
+                    >
+                      <p>{outputField.name}</p>
+                      <ArrayInput
+                        value={outputField.path}
+                        onChange={(value) => {
+                          updateOutputField(outputFieldIndex, {
+                            ...outputField,
+                            path: value,
+                          });
+                        }}
+                      />
+                    </TableHead>
+                  )
                 )}
                 {columnVisibility.error === true && (
-                  <TableHead className="min-w-96">Error</TableHead>
+                  <TableHead className="min-w-96">error</TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody className="w-full h-full overflow-auto">
-              {datasetItems.map((datasetItem, index) => (
-                <ContextMenu key={datasetItem.id}>
+              {datasetObj.data.map((row, index) => (
+                <ContextMenu key={index}>
                   <ContextMenuTrigger
                     asChild
                     className={cn(
@@ -448,7 +486,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                           {index + 1}
                         </p>
                       </TableCell>
-                      {dataset.parameters.map((promptParameter) => (
+                      {datasetObj.parameterFields.map((promptParameter) => (
                         <TableCell
                           key={promptParameter}
                           className={cn(
@@ -497,37 +535,18 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                             placeholder={
                               "Input a value for " + promptParameter + "... "
                             }
-                            value={
-                              datasetItem.promptParameters[promptParameter] ??
-                              ""
-                            }
+                            value={row.arguments[promptParameter] ?? ""}
                             onBlur={(value) => {
-                              try {
-                                setDatasetItem({
-                                  action: "update",
-                                  datasetItem: {
-                                    ...datasetItem,
-                                    promptParameters: {
-                                      ...datasetItem.promptParameters,
-                                      [promptParameter]: value,
-                                    },
-                                  },
-                                });
-                              } catch (e) {
-                                if (e instanceof Error) {
-                                  toast({
-                                    title: "Error",
-                                    description: e.message,
-                                    variant: "destructive",
-                                  });
-                                }
-                              }
+                              handleUpdateRow(index, {
+                                ...row.arguments,
+                                [promptParameter]: value,
+                              });
                             }}
                           />
                         </TableCell>
                       ))}
                       {/* Vertical divider */}
-                      {dataset.parameters.length > 0 && (
+                      {datasetObj.parameterFields.length > 0 && (
                         <TableCell className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableCell>
                       )}
                       {columnVisibility.compiledInput === true && (
@@ -542,15 +561,16 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         >
                           <p className={cn(["overflow-y-auto", "max-h-64"])}>
                             {JSON.stringify(
-                              getParsedParameters(datasetItem.promptParameters),
+                              getParsedArguments(row.arguments),
                               null,
                               2
                             )}
                           </p>
                         </TableCell>
                       )}
-                      {columnVisibility.output === true && (
+                      {datasetObj.outputFields.map((outputField) => (
                         <TableCell
+                          key={outputField.name}
                           className={cn(
                             "p-2",
                             "align-baseline",
@@ -559,22 +579,36 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                             "whitespace-pre-wrap"
                           )}
                         >
-                          <p
-                            className={cn([
-                              "overflow-y-auto",
-                              "max-h-40",
-                              "whitespace-pre-wrap",
-                              (datasetItem.output === undefined ||
-                                datasetItem.output === "") && [
-                                "text-muted-foreground",
-                                "italic",
-                              ],
-                            ])}
-                          >
-                            {getDatasetItemOutput(datasetItem)}
-                          </p>
+                          {completionLoaderMap?.[row.id] ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <p
+                              className={cn([
+                                "overflow-y-auto",
+                                "max-h-40",
+                                "whitespace-pre-wrap",
+                                (datasetRunMap?.[row.id] === undefined ||
+                                  datasetRunMap?.[row.id].output === "") && [
+                                  "text-muted-foreground",
+                                  "italic",
+                                ],
+                              ])}
+                            >
+                              {getDatasetItemOutput({
+                                outputField,
+                                datasetRowId: row.id,
+                              })}
+                            </p>
+                          )}
+                          <div className="flex justify-end">
+                            <IndexDatasetTemplateRunDialog
+                              datasetId={dataset.id}
+                              templateId={template.id}
+                              datasetRowId={row.id}
+                            />
+                          </div>
                         </TableCell>
-                      )}
+                      ))}
                       {columnVisibility.error === true && (
                         <TableCell
                           className={cn(
@@ -582,17 +616,27 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                             "align-baseline",
                             "min-w-96",
                             "flex-shrink-0",
-                            "whitespace-pre-wrap"
+                            "whitespace-pre-wrap",
+                            getDatasetItemError(row.id) === "" && [
+                              "text-muted-foreground",
+                              "italic",
+                            ]
                           )}
                         >
-                          {datasetItem.error}
+                          {completionLoaderMap?.[row.id] ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : getDatasetItemError(row.id) === "" ? (
+                            <p>No error.</p>
+                          ) : (
+                            <p>{getDatasetItemError(row.id)}</p>
+                          )}
                         </TableCell>
                       )}
                     </TableRow>
                   </ContextMenuTrigger>
                   <ContextMenuContent>
                     <ContextMenuItem
-                      onClick={() => handleCreateCompletion(datasetItem.id)}
+                      onClick={() => handleCreateCompletion(index)}
                       disabled={isPending}
                       className="space-x-2"
                     >
@@ -600,12 +644,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                       <p>Run</p>
                     </ContextMenuItem>
                     <ContextMenuItem
-                      onClick={() =>
-                        setDatasetItem({
-                          action: "delete",
-                          datasetItem,
-                        })
-                      }
+                      onClick={() => deleteRow(index)}
                       className="space-x-2 text-red-500"
                     >
                       <Trash2Icon size={16} />
@@ -619,7 +658,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
         </CardContent>
         <CardFooter className="bg-background w-full border-t flex items-center px-4 py-2">
           <p className="text-sm text-muted-foreground">
-            {datasetItems.length} items
+            {datasetObj.data.length} items
           </p>
         </CardFooter>
       </Card>
