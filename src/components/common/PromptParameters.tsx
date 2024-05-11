@@ -1,18 +1,14 @@
 import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 import { cn } from "@/lib/utils";
 import {
-  LLMRequestBodySchemaType,
-  OpenAIChatCompletionRenderSchema,
-  OpenAIChatCompletionRequestBodySchema,
-  RenderSchema,
-} from "@/types/resource";
+  OpenAIChatCompletionPromptParametersSchema,
+} from "@/types/resources/openai";
 import { json } from "@codemirror/lang-json";
 
-import { useModels } from "@/hooks/useModels";
-import { useResources } from "@/hooks/useResources";
 import { PromptTemplateType } from "@/types/prompt";
+import { ResourceParameterKeyType } from "@/types/resources";
+import { ParameterInputSchema } from "@/types/resources/common";
 import { PlusIcon } from "lucide-react";
-import { useTheme } from "next-themes";
 import { FC } from "react";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -36,34 +32,22 @@ type PromptParametersProps = {
   setTemplate: (template: PromptTemplateType) => void;
 };
 
-const resourceIdToSchema = {
-  [OpenAIChatCompletionResource.id]: OpenAIChatCompletionRequestBodySchema,
-};
-
-const resourceIdToRenderSchema = {
-  [OpenAIChatCompletionResource.id]: OpenAIChatCompletionRenderSchema,
+const resourceIdToParameterSchema = {
+  [OpenAIChatCompletionResource.id]: OpenAIChatCompletionPromptParametersSchema,
 };
 
 export const PromptParameters: FC<PromptParametersProps> = ({
   template,
   setTemplate,
 }) => {
-  const { llmParameters: parameters, enabledParameters, resourceId } = template;
-  const { data: resources } = useResources();
-  const { data: models } = useModels();
-  const { resolvedTheme } = useTheme();
-  const resourceSchema = resourceIdToSchema[resourceId];
-  const resourceRenderSchema = resourceIdToRenderSchema[resourceId];
-  if (!resourceSchema || !resourceRenderSchema) {
-    throw new Error(`No schema or definition found for resource ${resourceId}`);
-  }
-  if (
-    Object.keys(resourceSchema.shape).length !==
-    Object.keys(resourceRenderSchema).length
-  ) {
-    throw new Error(
-      `Parameters length does not match definition length for resource ${resourceId}`
-    );
+  const {
+    llmParameters: savedParameters,
+    enabledParameters,
+    resourceId,
+  } = template;
+  const resourceParameterSchema = resourceIdToParameterSchema[resourceId];
+  if (resourceParameterSchema === undefined) {
+    throw new Error(`No schema found for resource ${resourceId}`);
   }
   const setParameters = (parameters: object) => {
     setTemplate({
@@ -73,7 +57,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
   };
 
   const handleCheckboxChange = (
-    key: keyof LLMRequestBodySchemaType,
+    key: ResourceParameterKeyType,
     checked: boolean,
     defaultValue?: any
   ) => {
@@ -84,11 +68,13 @@ export const PromptParameters: FC<PromptParametersProps> = ({
       const value =
         defaultValue !== undefined
           ? defaultValue
-          : resourceRenderSchema[key].default;
+          : savedParameters[key] !== undefined
+          ? savedParameters[key]
+          : resourceParameterSchema[key].default;
       setTemplate({
         ...template,
         llmParameters: {
-          ...parameters,
+          ...savedParameters,
           [key]: value,
         },
         enabledParameters: dedupedEnabledParameters,
@@ -100,39 +86,19 @@ export const PromptParameters: FC<PromptParametersProps> = ({
       });
     }
   };
-  const selectedResource = resources.find((r) => r.id === resourceId);
-  const allKeys = Object.keys(resourceSchema.shape);
-  const keys = Object.keys(resourceSchema.shape)
-    .sort()
-    .filter((key) => key !== "messages" && key !== "prompt" && key !== "model");
-  if (allKeys.includes("messages")) {
-    keys.splice(0, 0, "messages");
-  }
-  if (allKeys.includes("prompt")) {
-    keys.splice(0, 0, "prompt");
-  }
-  if (allKeys.includes("model")) {
-    keys.splice(0, 0, "model");
-  }
-  const providerModels = models.filter(
-    (model) => model.providerId === selectedResource?.providerId
-  );
+  const resourceParameters = Object.keys(resourceParameterSchema);
   return (
     <div className="space-y-4">
-      {keys.map((key) => {
-        const typedKey = key as keyof LLMRequestBodySchemaType;
-        const definition = resourceRenderSchema[typedKey];
-        const parsedDefinition = RenderSchema.parse(definition);
-        const keySchema =
-          resourceSchema.shape[key as keyof typeof resourceSchema.shape];
-        if (!keySchema) {
-          throw new Error(`No schema found for key ${key}`);
-        }
+      {resourceParameters.map((resourceParameter) => {
+        const typedKey = resourceParameter as ResourceParameterKeyType;
+        const parameterSchema = resourceParameterSchema[typedKey];
+
+        const parsedDefinition = ParameterInputSchema.parse(parameterSchema);
         const defaultValue = parsedDefinition.default;
         const checked = enabledParameters.includes(typedKey);
-        const value = parameters[typedKey] ?? defaultValue;
+        const value = savedParameters[typedKey] ?? defaultValue;
         return (
-          <div className="flex space-x-4 flex-col" key={key}>
+          <div className="flex space-x-4 flex-col" key={resourceParameter}>
             {/** First row of a parameter */}
             <div className="flex space-x-4 items-center">
               <Checkbox
@@ -151,13 +117,13 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       variant="unstyled"
                       className="p-0"
                     >
-                      {key}
+                      {resourceParameter}
                     </Button>
                     {typeof value === "number" && (
                       <ClickableInput
                         value={value.toString()}
                         parse={(value) => {
-                          keySchema.parse(value);
+                          parsedDefinition.parse(value);
                           return value;
                         }}
                         placeholder={value.toString()}
@@ -169,8 +135,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                         }}
                         onBlur={(value) => {
                           setParameters({
-                            ...parameters,
-                            [key]: keySchema.parse(value),
+                            ...savedParameters,
+                            [resourceParameter]: parsedDefinition.parse(value),
                           });
                         }}
                       />
@@ -185,7 +151,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     variant="unstyled"
                     className="p-0"
                   >
-                    {key}
+                    {resourceParameter}
                   </Button>
                 )}
                 {parsedDefinition.type === "json" && (
@@ -196,7 +162,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     variant="unstyled"
                     className="p-0"
                   >
-                    {key}
+                    {resourceParameter}
                   </Button>
                 )}
                 {parsedDefinition.type === "switch" && (
@@ -208,7 +174,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       variant="unstyled"
                       className="p-0"
                     >
-                      {key}
+                      {resourceParameter}
                     </Button>
                     <Switch
                       checked={value === true}
@@ -219,8 +185,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       }}
                       onCheckedChange={(checked) => {
                         setParameters({
-                          ...parameters,
-                          [key]: checked,
+                          ...savedParameters,
+                          [resourceParameter]: checked,
                         });
                       }}
                     />
@@ -235,7 +201,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       variant="unstyled"
                       className="p-0"
                     >
-                      {key}
+                      {resourceParameter}
                     </Button>
                   </div>
                 )}
@@ -248,7 +214,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       variant="unstyled"
                       className="p-0"
                     >
-                      {key}
+                      {resourceParameter}
                     </Button>
                     <Button
                       variant="link"
@@ -256,14 +222,11 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                         if (!checked) {
                           handleCheckboxChange(typedKey, !checked);
                         }
-                        const { success, data } =
-                          OpenAIChatCompletionRequestBodySchema.shape[
-                            "tools"
-                          ].safeParse(value);
-                        if (success && Array.isArray(data)) {
+                        const data = parsedDefinition.parse(value);
+                        if (Array.isArray(data)) {
                           setParameters({
-                            ...parameters,
-                            [key]: [
+                            ...savedParameters,
+                            [resourceParameter]: [
                               ...data,
                               {
                                 type: "function",
@@ -277,8 +240,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                           });
                         } else {
                           setParameters({
-                            ...parameters,
-                            [key]: [
+                            ...savedParameters,
+                            [resourceParameter]: [
                               {
                                 type: "function",
                                 function: {
@@ -306,11 +269,11 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       variant="unstyled"
                       className="p-0"
                     >
-                      {key}
+                      {resourceParameter}
                     </Button>
                   </div>
                 )}
-                {parsedDefinition.type === "model" && (
+                {parsedDefinition.type === "select" && (
                   <div>
                     <Button
                       onClick={() => {
@@ -319,7 +282,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       variant="unstyled"
                       className="p-0"
                     >
-                      {key}
+                      {resourceParameter}
                     </Button>
                   </div>
                 )}
@@ -343,8 +306,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                   value={[value] as [number]}
                   onValueChange={(value) => {
                     setParameters({
-                      ...parameters,
-                      [key]: value[0],
+                      ...savedParameters,
+                      [resourceParameter]: value[0],
                     });
                   }}
                 />
@@ -359,13 +322,13 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     }
                   }}
                   validateChange={(value) => {
-                    keySchema.parse(JSON.parse(value));
+                    parsedDefinition.parse(JSON.parse(value));
                   }}
                   onChange={(event) => {
                     const parsedValue = JSON.parse(event.target.value);
                     setParameters({
-                      ...parameters,
-                      [key]: parsedValue,
+                      ...savedParameters,
+                      [resourceParameter]: parsedValue,
                     });
                   }}
                 />
@@ -380,13 +343,13 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     }
                   }}
                   validateChange={(value) => {
-                    keySchema.parse(JSON.parse(value));
+                    parsedDefinition.parse(JSON.parse(value));
                     return value;
                   }}
                   onChange={(value) => {
                     setParameters({
-                      ...parameters,
-                      [key]: value,
+                      ...savedParameters,
+                      [resourceParameter]: value,
                     });
                   }}
                   value={
@@ -411,13 +374,13 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                   onChange={(event) => {
                     if (parsedDefinition.inputType === "number") {
                       setParameters({
-                        ...parameters,
-                        [key]: Number(event.target.value),
+                        ...savedParameters,
+                        [resourceParameter]: Number(event.target.value),
                       });
                     } else {
                       setParameters({
-                        ...parameters,
-                        [key]: event.target.value,
+                        ...savedParameters,
+                        [resourceParameter]: event.target.value,
                       });
                     }
                   }}
@@ -433,14 +396,14 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     }
                   }}
                   validateChange={(value) => {
-                    keySchema.parse(JSON.parse(value));
+                    parsedDefinition.parse(JSON.parse(value));
                     return value;
                   }}
                   onChange={(value) => {
                     const parsedValue = JSON.parse(value);
                     setParameters({
-                      ...parameters,
-                      [key]: parsedValue,
+                      ...savedParameters,
+                      [resourceParameter]: parsedValue,
                     });
                   }}
                   value={JSON.stringify(value, null, 2)}
@@ -455,26 +418,26 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     onChange={(toggleType, value) => {
                       if (toggleType === "string") {
                         setParameters({
-                          ...parameters,
-                          [key]: value,
+                          ...savedParameters,
+                          [resourceParameter]: value,
                         });
                       }
                       if (toggleType === "object") {
                         setParameters({
-                          ...parameters,
-                          [key]: JSON.parse(value),
+                          ...savedParameters,
+                          [resourceParameter]: JSON.parse(value),
                         });
                       }
                     }}
                   />
                 )}
-              {parsedDefinition.type === "model" && (
+              {parsedDefinition.type === "select" && (
                 <Select
                   value={value as string}
                   onValueChange={(value) => {
                     setParameters({
-                      ...parameters,
-                      [key]: value,
+                      ...savedParameters,
+                      [resourceParameter]: value,
                     });
                   }}
                 >
@@ -482,9 +445,9 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {providerModels.map((model) => (
-                      <SelectItem key={model.name} value={model.name}>
-                        {model.name}
+                    {parsedDefinition.choices.map((choice) => (
+                      <SelectItem key={choice.name} value={choice.name}>
+                        {choice.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

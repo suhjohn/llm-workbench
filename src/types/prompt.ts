@@ -3,22 +3,22 @@ import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { ChatMessageSchema } from "./chat";
 import { DatasetSchema } from "./dataset";
-import { LLMRequestBodySchema } from "./resource";
-import { getKeysFromUnionSchema } from "./util";
-
-type LLMRequestBodyKeyType = keyof z.infer<typeof LLMRequestBodySchema>;
-
-const keys = getKeysFromUnionSchema(LLMRequestBodySchema);
+import { ResourceParameterKeyType, ResourceParameterKeys } from "./resources";
 
 export const PromptTemplateSchema = z.object({
   id: z.string(),
   name: z.string(),
   resourceId: z.string(),
-  llmParameters: LLMRequestBodySchema,
+  llmParameters: z.record(z.string(), z.any()),
   promptTemplate: z.string(),
   messagesTemplate: z.array(ChatMessageSchema),
   enabledParameters: z.array(
-    z.enum(keys as [LLMRequestBodyKeyType, ...LLMRequestBodyKeyType[]])
+    z.enum(
+      ResourceParameterKeys as [
+        ResourceParameterKeyType,
+        ...ResourceParameterKeyType[]
+      ]
+    )
   ),
   createdAt: z.string(),
   updatedAt: z.string(),

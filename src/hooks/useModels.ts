@@ -1,5 +1,5 @@
-import { Models } from "@/fixtures/models/openai";
+import { OpenAIModels } from "@/fixtures/models/openai";
 
 export const useModels = () => {
-  return { data: Models };
+  return { data: OpenAIModels };
 };

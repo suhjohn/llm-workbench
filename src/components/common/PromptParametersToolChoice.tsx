@@ -1,6 +1,5 @@
-import { OpenAIChatCompletionToolChoiceObjectSchema } from "@/types/resource";
+import { OpenAIChatCompletionToolChoiceObjectSchema } from "@/types/resources/openai";
 import { json } from "@codemirror/lang-json";
-import { useTheme } from "next-themes";
 import { FC, useState } from "react";
 import {
   Select,
@@ -21,7 +20,6 @@ type PromptParametersToolChoiceProps = {
 export const PromptParametersToolChoice: FC<
   PromptParametersToolChoiceProps
 > = ({ value, checked, onChange }) => {
-  const { resolvedTheme } = useTheme();
   const [toggleType, setToggleType] = useState<"string" | "object">("string");
 
   return (
