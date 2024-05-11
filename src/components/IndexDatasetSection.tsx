@@ -4,7 +4,10 @@ import { useDatasetObjById } from "@/hooks/useDatasets";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
 import { useResources } from "@/hooks/useResources";
-import { useCreateTemplateDataset } from "@/hooks/useTemplates";
+import {
+  useCreateTemplateDataset,
+  useDatasetTemplates,
+} from "@/hooks/useTemplates";
 import { compile } from "@/lib/parser";
 import { cn, getNestedValue } from "@/lib/utils";
 import { DatasetType, OutputFieldType } from "@/types/dataset";
@@ -12,15 +15,17 @@ import { JsonValue } from "@/types/json";
 import { PromptTemplateType } from "@/types/prompt";
 import { useMutation } from "@tanstack/react-query";
 import {
+  ChevronDownIcon,
   ChevronLeft,
   Loader2,
   Play,
   Plus,
-  Trash2Icon
+  Trash2Icon,
 } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { IndexDatasetTemplateRunDialog } from "./IndexDatasetTemplateRunDialog";
+import { AddColumnDialogContent } from "./common/AddColumnDialog";
 import { ArrayInput } from "./common/ArrayInput";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
@@ -32,6 +37,12 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -46,6 +57,7 @@ type DatasetSectionProps = {
   template: PromptTemplateType;
   dataset: DatasetType;
   setDataset: (dataset: DatasetType) => void;
+  onClickTemplate: (templateId: string) => void;
   onClickBack?: () => void;
 };
 
@@ -59,6 +71,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   template,
   dataset,
   setDataset,
+  onClickTemplate,
   onClickBack,
 }) => {
   const { templateView } = useIndexSearchParams();
@@ -73,7 +86,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   } = useDatasetObjById({
     datasetId: dataset.id,
   });
-
+  const { data: datasetTemplates } = useDatasetTemplates(dataset.id);
   const { mutateAsync: createDatasetRun } = useCreateDatasetRun();
   const { data: datasetRunMap } = useDatasetRuns({
     datasetId: dataset.id,
@@ -100,6 +113,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
   const { toast } = useToast();
   const { data: resources } = useResources();
+  const [openAddColumnDialog, setOpenAddColumnDialog] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<keyof TableDatasetItemType, boolean>
   >({
@@ -317,11 +331,14 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           parse={(value) => value}
         />
         <div className="flex space-x-2">
-          {templateView === "detail" && (
-            <Button variant={"outline"} onClick={handleConnectTemplate}>
-              <p>Connect template</p>
-            </Button>
-          )}
+          {templateView === "detail" &&
+            !datasetTemplates?.some(
+              (datasetTemplate) => datasetTemplate.template.id === template.id
+            ) && (
+              <Button variant={"outline"} onClick={handleConnectTemplate}>
+                <p>Connect template</p>
+              </Button>
+            )}
           <Button
             onClick={() => runAllCompletions()}
             disabled={datasetObj.data.length === 0 || isRunningAllCompletions}
@@ -363,6 +380,27 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 </Button>
               )}
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  {`Outputs from '${template.name}'`}{" "}
+                  <ChevronDownIcon className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {datasetTemplates?.map((datasetTemplate) => (
+                  <DropdownMenuItem
+                    key={datasetTemplate.id}
+                    aria-selected={datasetTemplate.template.id === template.id}
+                    onClick={() => {
+                      onClickTemplate(datasetTemplate.template.id);
+                    }}
+                  >
+                    {datasetTemplate.template.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">
@@ -427,8 +465,14 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         disabled={isPending}
                         className="space-x-2 text-red-500"
                       >
-                        <Trash2Icon size={16} />
                         <p>Delete column</p>
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onClick={() => setOpenAddColumnDialog(true)}
+                        disabled={isPending}
+                        className="space-x-2"
+                      >
+                        <p>Add column</p>
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
@@ -674,6 +718,13 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           </p>
         </CardFooter>
       </Card>
+      <AddColumnDialogContent
+        open={openAddColumnDialog}
+        setOpen={setOpenAddColumnDialog}
+        onSubmit={(column) => {
+          handleAddColumns({ columns: [column] });
+        }}
+      />
     </div>
   );
 };

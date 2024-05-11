@@ -10,7 +10,7 @@ import {
 import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Trash2Icon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -319,7 +319,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                       }}
                       variant="ghost"
                     >
-                      Delete
+                      <Trash2Icon size={16} />
                     </Button>
                   </div>
                 ))}

@@ -1,6 +1,5 @@
 import { localForageStore } from "@/lib/localforage";
 import {
-  PromptTemplateDatasetSchema,
   PromptTemplateDatasetType,
   PromptTemplateSchema,
   PromptTemplateType,
@@ -18,8 +17,8 @@ export const getTemplateDatasetsQueryKey = (templateId: string) => [
   templateId,
 ];
 
-export const getTemplateDatasetsLocalStorageKey = (templateId: string) =>
-  `promptTemplateDatasets-${templateId}`;
+export const getTemplateDatasetsLocalStorageKey = () =>
+  `promptTemplateDatasets`;
 
 export const useTemplates = () => {
   return useQuery({
@@ -115,9 +114,9 @@ export const useTemplateDatasets = (templateId: string) => {
   return useQuery({
     queryKey: getTemplateDatasetsQueryKey(templateId),
     queryFn: async () => {
-      const templateDatasetsTable = await localForageStore.getItem<{
-        [x: string]: any[];
-      }>(getTemplateDatasetsLocalStorageKey(templateId));
+      const templateDatasetsTable = await localForageStore.getItem<
+        PromptTemplateDatasetType[]
+      >(getTemplateDatasetsLocalStorageKey());
       if (!templateDatasetsTable) {
         return [];
       }
@@ -127,16 +126,65 @@ export const useTemplateDatasets = (templateId: string) => {
       if (!datasetTable) {
         return [];
       }
-      const templateDatasets = templateDatasetsTable[templateId];
+      const templateTable = await localForageStore.getItem<{
+        [x: string]: any;
+      }>(TEMPLATES_LOCAL_STORAGE_KEY);
+      if (!templateTable) {
+        return [];
+      }
+      const templateDatasets = templateDatasetsTable.filter(
+        (templateDataset) => templateDataset.promptTemplateId === templateId
+      );
       if (!templateDatasets) {
         return [];
       }
-      return templateDatasets.map((templateDataset) =>
-        PromptTemplateDatasetSchema.parse({
+      return templateDatasets.map((templateDataset) => {
+        return {
           ...templateDataset,
           dataset: datasetTable[templateDataset.datasetId],
-        })
-      ) as PromptTemplateDatasetType[];
+          template: templateTable[templateDataset.promptTemplateId],
+        };
+      });
+    },
+  });
+};
+
+export const getDatasetTemplatesQueryKey = (datasetId: string) => [
+  `datasetTemplates`,
+  datasetId,
+];
+
+export const useDatasetTemplates = (datasetId: string) => {
+  return useQuery({
+    queryKey: getDatasetTemplatesQueryKey(datasetId),
+    queryFn: async () => {
+      const templateDatasetsTable = await localForageStore.getItem<
+        PromptTemplateDatasetType[]
+      >(getTemplateDatasetsLocalStorageKey());
+      if (!templateDatasetsTable) {
+        return [];
+      }
+      const datasetTable = await localForageStore.getItem<{
+        [x: string]: any;
+      }>(DATASETS_LOCAL_STORAGE_KEY);
+      if (!datasetTable) {
+        return [];
+      }
+      const templateTable = await localForageStore.getItem<{
+        [x: string]: any;
+      }>(TEMPLATES_LOCAL_STORAGE_KEY);
+      if (!templateTable) {
+        return [];
+      }
+      return templateDatasetsTable
+        .filter((templateDataset) => templateDataset.datasetId === datasetId)
+        .map((templateDataset) => {
+          return {
+            ...templateDataset,
+            dataset: datasetTable[templateDataset.datasetId],
+            template: templateTable[templateDataset.promptTemplateId],
+          };
+        });
     },
   });
 };
@@ -152,17 +200,19 @@ export const useCreateTemplateDataset = () => {
       datasetId: string;
     }) => {
       const templateDatasetsTable =
-        (await localForageStore.getItem<{
-          [x: string]: any;
-        }>(getTemplateDatasetsLocalStorageKey(templateId))) ?? {};
-      const existingList = templateDatasetsTable[templateId] as any[];
-      if (existingList) {
-        if (existingList.find((item: any) => item.datasetId === datasetId)) {
-          return;
-        }
+        (await localForageStore.getItem<PromptTemplateDatasetType[]>(
+          getTemplateDatasetsLocalStorageKey()
+        )) ?? [];
+      if (
+        templateDatasetsTable.find(
+          (item) =>
+            item.promptTemplateId === templateId && item.datasetId === datasetId
+        )
+      ) {
+        return;
       }
-      templateDatasetsTable[templateId] = [
-        ...(templateDatasetsTable[templateId] ?? []),
+      const newTemplateDatasetsTable = [
+        ...templateDatasetsTable,
         {
           id: uuidv4(),
           promptTemplateId: templateId,
@@ -172,11 +222,14 @@ export const useCreateTemplateDataset = () => {
         },
       ];
       await localForageStore.setItem(
-        getTemplateDatasetsLocalStorageKey(templateId),
-        templateDatasetsTable
+        getTemplateDatasetsLocalStorageKey(),
+        newTemplateDatasetsTable
       );
       queryClient.resetQueries({
         queryKey: getTemplateDatasetsQueryKey(templateId),
+      });
+      queryClient.resetQueries({
+        queryKey: getDatasetTemplatesQueryKey(datasetId),
       });
     },
   });
@@ -193,23 +246,23 @@ export const useDeleteTemplateDataset = () => {
       datasetId: string;
     }) => {
       const templateDatasetsTable =
-        (await localForageStore.getItem<{
-          [x: string]: any;
-        }>(getTemplateDatasetsLocalStorageKey(templateId))) ?? {};
-      const existingList = templateDatasetsTable[templateId] as any[];
-      if (existingList) {
-        templateDatasetsTable[templateId] = existingList.filter(
-          (item: any) => item.datasetId !== datasetId
-        );
-        await localForageStore.setItem(
-          getTemplateDatasetsLocalStorageKey(templateId),
-          templateDatasetsTable
-        );
-        queryClient.setQueryData(
-          getTemplateDatasetsQueryKey(templateId),
-          templateDatasetsTable[templateId]
-        );
-      }
+        (await localForageStore.getItem<PromptTemplateDatasetType[]>(
+          getTemplateDatasetsLocalStorageKey()
+        )) ?? [];
+      const newTemplateDatasetsTable = templateDatasetsTable.filter(
+        (item) =>
+          item.promptTemplateId !== templateId || item.datasetId !== datasetId
+      );
+      await localForageStore.setItem(
+        getTemplateDatasetsLocalStorageKey(),
+        newTemplateDatasetsTable
+      );
+      queryClient.resetQueries({
+        queryKey: getTemplateDatasetsQueryKey(templateId),
+      });
+      queryClient.resetQueries({
+        queryKey: getDatasetTemplatesQueryKey(datasetId),
+      });
     },
   });
 };

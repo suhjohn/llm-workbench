@@ -179,6 +179,7 @@ export default function IndexPage() {
               dataset={dataset}
               setDataset={handleUpdateDataset}
               template={template}
+              onClickTemplate={handleClickTemplate}
               onClickBack={handleClickBackDataset}
             />
           )}

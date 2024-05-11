@@ -29,6 +29,7 @@ export const PromptTemplateDatasetSchema = z.object({
   promptTemplateId: z.string(),
   datasetId: z.string(),
   dataset: DatasetSchema,
+  template: PromptTemplateSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
 });
