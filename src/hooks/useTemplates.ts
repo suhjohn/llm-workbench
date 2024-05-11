@@ -29,14 +29,15 @@ export const useTemplates = () => {
         [x: string]: unknown;
       }>(TEMPLATES_LOCAL_STORAGE_KEY);
       if (!templates) {
-        return {};
+        return [];
       }
-      return Object.fromEntries(
-        Object.entries(templates).map(([id, template]) => [
-          id,
-          PromptTemplateSchema.parse(template),
-        ]) ?? []
-      );
+      return Object.values(templates)
+        .map((template) => PromptTemplateSchema.parse(template))
+        .sort((a, b) => {
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        }) as PromptTemplateType[];
     },
   });
 };
@@ -49,18 +50,20 @@ export const useCreateTemplate = () => {
         (await localForageStore.getItem<{
           [x: string]: unknown;
         }>(TEMPLATES_LOCAL_STORAGE_KEY)) ?? {};
+      const newTemplate = {
+        ...template,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
       await localForageStore.setItem(TEMPLATES_LOCAL_STORAGE_KEY, {
         ...templates,
-        [template.id]: {
-          ...template,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+        [newTemplate.id]: newTemplate,
       });
-      queryClient.setQueryData([TEMPLATES_QUERY_KEY], {
-        ...templates,
-        [template.id]: template,
-      });
+      const existingTemplates = queryClient.getQueryData([TEMPLATES_QUERY_KEY]);
+      queryClient.setQueryData(
+        [TEMPLATES_QUERY_KEY],
+        [newTemplate, ...(existingTemplates as PromptTemplateType[])]
+      );
     },
   });
 };
@@ -77,10 +80,13 @@ export const useUpdateTemplate = () => {
         ...templates,
         [template.id]: template,
       });
-      queryClient.setQueryData([TEMPLATES_QUERY_KEY], {
-        ...templates,
-        [template.id]: template,
-      });
+      const existingTemplates = queryClient.getQueryData([TEMPLATES_QUERY_KEY]);
+      queryClient.setQueryData(
+        [TEMPLATES_QUERY_KEY],
+        (existingTemplates as PromptTemplateType[]).map((t) =>
+          t.id === template.id ? template : t
+        )
+      );
     },
   });
 };
@@ -95,7 +101,12 @@ export const useDeleteTemplate = () => {
         }>(TEMPLATES_LOCAL_STORAGE_KEY)) ?? {};
       delete templates[id];
       await localForageStore.setItem(TEMPLATES_LOCAL_STORAGE_KEY, templates);
-      queryClient.setQueryData([TEMPLATES_QUERY_KEY], templates);
+      queryClient.setQueryData(
+        [TEMPLATES_QUERY_KEY],
+        Object.values(templates).map((template) =>
+          PromptTemplateSchema.parse(template)
+        )
+      );
     },
   });
 };

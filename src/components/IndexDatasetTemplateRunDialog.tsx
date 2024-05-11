@@ -35,7 +35,16 @@ export const IndexDatasetTemplateRunDialog: FC<
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" className="space-x-2">
-          <History size={16} />
+          <History
+            size={16}
+            className={cn(
+              "text-muted-foreground",
+              "hover:text-accent-foreground",
+              "transition",
+              "duration-200",
+              "ease-in-out"
+            )}
+          />
         </Button>
       </DialogTrigger>
       <DialogContent className="p-0 overflow-hidden h-full max-w-screen-lg">
@@ -50,10 +59,18 @@ export const IndexDatasetTemplateRunDialog: FC<
           </DialogDescription>
         </DialogHeader>
         {runs !== undefined && (
-          <div className="px-4 flex flex-1 gap-4 w-full overflow-auto h-full">
-            <div className={cn("flex", "flex-col", "items-start", "space-y-2")}>
+          <div className="px-4 flex flex-1 gap-4 w-full overflow-auto w-full h-full">
+            <div
+              className={cn(
+                "flex",
+                "w-full",
+                "flex-col",
+                "items-start",
+                "gap-4"
+              )}
+            >
               {Object.values(runs).map((run) => (
-                <Card key={run.id}>
+                <Card key={run.id} className="w-full">
                   <CardHeader>
                     <p className="text-sm text-gray-500">
                       {formatAppleDate(new Date(run.createdAt))}

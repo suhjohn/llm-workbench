@@ -19,6 +19,19 @@ export const useNavigateToNewParams = () => {
     // Push updated URL with new search params
     router.push(`/?${newSearchParams.toString()}`);
   };
+  const getNewParams = (params: object) => {
+    const newSearchParams = new URLSearchParams(searchParams);
 
-  return { navigateToNewParams };
+    // Update the search parameters
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null) {
+        newSearchParams.delete(key);
+      } else {
+        newSearchParams.set(key, value);
+      }
+    });
+
+    return newSearchParams.toString();
+  };
+  return { navigateToNewParams, getNewParams };
 };

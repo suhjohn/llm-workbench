@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetType } from "@/types/dataset";
 import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
 import { AlignHorizontalDistributeCenter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { v4 as uuidv4 } from "uuid";
 import { DatasetList } from "./DatasetList";
@@ -45,17 +45,25 @@ export default function IndexPage() {
   const { data: templates } = useTemplates();
   const { data: datasets } = useDatasets();
 
+  const templatesMap = useMemo(() => {
+    console.log(templates)
+    return templates?.reduce((acc, template) => {
+      acc[template.id] = template;
+      return acc;
+    }, {} as Record<string, PromptTemplateType>);
+  }, [templates]);
+
   useEffect(() => {
     if (selectedTemplateId === template.id) {
       return;
     }
-    if (templates !== undefined && selectedTemplateId !== null) {
-      const selectedTemplate = templates[selectedTemplateId];
+    if (templatesMap !== undefined && selectedTemplateId !== null) {
+      const selectedTemplate = templatesMap[selectedTemplateId];
       if (selectedTemplate) {
         setTemplate(selectedTemplate);
       }
     }
-  }, [template, selectedTemplateId, templates, setTemplate]);
+  }, [template, selectedTemplateId, templatesMap, setTemplate]);
   useEffect(() => {
     if (datasets !== undefined && selectedDatasetId !== null) {
       const selectedDataset = datasets[selectedDatasetId];

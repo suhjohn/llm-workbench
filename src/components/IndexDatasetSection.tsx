@@ -12,12 +12,11 @@ import { JsonValue } from "@/types/json";
 import { PromptTemplateType } from "@/types/prompt";
 import { useMutation } from "@tanstack/react-query";
 import {
-  ChevronDownIcon,
   ChevronLeft,
   Loader2,
   Play,
   Plus,
-  Trash2Icon,
+  Trash2Icon
 } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -33,12 +32,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./ui/context-menu";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -263,8 +256,8 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       description: `Added ${JSON.stringify(diff)} successfully.`,
     });
   };
-  const handleConnectTemplate = () => {
-    createTemplateDataset({
+  const handleConnectTemplate = async () => {
+    await createTemplateDataset({
       datasetId: dataset.id,
       templateId: template.id,
     });
@@ -356,7 +349,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 onClick={createRow}
               >
                 <Plus size={16} />
-                <p>Add item</p>
+                <p>Add row</p>
               </Button>
               {newPromptParametersExists && (
                 <Button
@@ -370,7 +363,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 </Button>
               )}
             </div>
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="ml-auto">
                   Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
@@ -393,14 +386,16 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </CardHeader>
         <CardContent className="flex flex-col overflow-hidden h-full p-0">
           <Table className="w-full h-full flex-shrink-0 overflow-auto">
             <TableHeader className={cn("border-b")}>
               <TableRow>
-                <TableHead />
+                <TableHead className="w-20 min-w-20 flex-shrink-0">
+                  <p className="text-sm text-muted-foreground">#</p>
+                </TableHead>
                 {datasetObj.parameterFields.map((param) => (
                   <ContextMenu key={param}>
                     <ContextMenuTrigger
@@ -416,6 +411,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                             templatePromptParameters.includes(param) && [
                               "font-bold",
                               "text-foreground",
+                              "text-blue-500",
                             ]
                           )}
                         >
@@ -437,34 +433,38 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                     </ContextMenuContent>
                   </ContextMenu>
                 ))}
-                {/* Vertical divider */}
-                {datasetObj.parameterFields.length > 0 && (
-                  <TableHead className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableHead>
-                )}
-                {columnVisibility.compiledInput === true && (
-                  <TableHead className="min-w-96">Compiled Input</TableHead>
-                )}
-                {datasetObj.outputFields.map(
-                  (outputField, outputFieldIndex) => (
-                    <TableHead
-                      key={outputField.name}
-                      className="flex items-center space-x-2 min-w-96"
-                    >
-                      <p>{outputField.name}</p>
-                      <ArrayInput
-                        value={outputField.path}
-                        onChange={(value) => {
-                          updateOutputField(outputFieldIndex, {
-                            ...outputField,
-                            path: value,
-                          });
-                        }}
-                      />
-                    </TableHead>
-                  )
-                )}
-                {columnVisibility.error === true && (
-                  <TableHead className="min-w-96">error</TableHead>
+                {templateView === "detail" && (
+                  <>
+                    {/* Vertical divider */}
+                    {datasetObj.parameterFields.length > 0 && (
+                      <TableHead className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableHead>
+                    )}
+                    {columnVisibility.compiledInput === true && (
+                      <TableHead className="min-w-96">Compiled Input</TableHead>
+                    )}
+                    {datasetObj.outputFields.map(
+                      (outputField, outputFieldIndex) => (
+                        <TableHead
+                          key={outputField.name}
+                          className="flex items-center space-x-2 min-w-96"
+                        >
+                          <p>{outputField.name}</p>
+                          <ArrayInput
+                            value={outputField.path}
+                            onChange={(value) => {
+                              updateOutputField(outputFieldIndex, {
+                                ...outputField,
+                                path: value,
+                              });
+                            }}
+                          />
+                        </TableHead>
+                      )
+                    )}
+                    {columnVisibility.error === true && (
+                      <TableHead className="min-w-96">error</TableHead>
+                    )}
+                  </>
                 )}
               </TableRow>
             </TableHeader>
@@ -479,16 +479,15 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                     )}
                   >
                     <TableRow>
-                      <TableCell>
-                        <p
-                          className={cn(
-                            "text-sm",
-                            "text-muted-foreground",
-                            "dark:text-muted-foreground"
-                          )}
-                        >
-                          {index + 1}
-                        </p>
+                      <TableCell
+                        className={cn(
+                          "max-w-20",
+                          "text-sm",
+                          "text-muted-foreground",
+                          "dark:text-muted-foreground"
+                        )}
+                      >
+                        {index + 1}
                       </TableCell>
                       {datasetObj.parameterFields.map((promptParameter) => (
                         <TableCell
@@ -496,14 +495,13 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                           className={cn(
                             "p-0.5",
                             "h-auto",
-                            "w-96",
-                            "flex-shrink-0",
+                            "max-w-96",
                             "whitespace-pre-wrap"
                           )}
                         >
                           <ClickableTextarea
                             rootClassName={cn(
-                              "w-full",
+                              "max-w-96",
                               "flex",
                               "h-full",
                               "border",
@@ -549,92 +547,102 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                           />
                         </TableCell>
                       ))}
-                      {/* Vertical divider */}
-                      {datasetObj.parameterFields.length > 0 && (
-                        <TableCell className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableCell>
-                      )}
-                      {columnVisibility.compiledInput === true && (
-                        <TableCell
-                          className={cn(
-                            "p-2",
-                            "align-baseline",
-                            "min-w-96",
-                            "flex-shrink-0",
-                            "whitespace-pre-wrap"
+                      {templateView === "detail" && (
+                        <>
+                          {/* Vertical divider */}
+                          {datasetObj.parameterFields.length > 0 && (
+                            <TableCell className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableCell>
                           )}
-                        >
-                          <p className={cn(["overflow-y-auto", "max-h-64"])}>
-                            {JSON.stringify(
-                              getParsedArguments(row.arguments),
-                              null,
-                              2
-                            )}
-                          </p>
-                        </TableCell>
-                      )}
-                      {datasetObj.outputFields.map((outputField) => (
-                        <TableCell
-                          key={outputField.name}
-                          className={cn(
-                            "p-2",
-                            "align-baseline",
-                            "min-w-96",
-                            "flex-shrink-0",
-                            "whitespace-pre-wrap"
-                          )}
-                        >
-                          {completionLoaderMap?.[row.id] ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <p
-                              className={cn([
-                                "overflow-y-auto",
-                                "max-h-40",
-                                "whitespace-pre-wrap",
-                                (datasetRunMap?.[row.id] === undefined ||
-                                  datasetRunMap?.[row.id].output === "") && [
-                                  "text-muted-foreground",
-                                  "italic",
-                                ],
-                              ])}
+                          {columnVisibility.compiledInput === true && (
+                            <TableCell
+                              className={cn(
+                                "p-2",
+                                "align-baseline",
+                                "max-w-96",
+                                "flex-shrink-0",
+                                "whitespace-pre-wrap"
+                              )}
                             >
-                              {getDatasetItemOutput({
-                                outputField,
-                                datasetRowId: row.id,
-                              })}
-                            </p>
+                              <p
+                                className={cn(["overflow-y-auto", "max-h-64"])}
+                              >
+                                {JSON.stringify(
+                                  getParsedArguments(row.arguments),
+                                  null,
+                                  2
+                                )}
+                              </p>
+                            </TableCell>
                           )}
-                          <div className="flex justify-end">
-                            <IndexDatasetTemplateRunDialog
-                              datasetId={dataset.id}
-                              templateId={template.id}
-                              datasetRowId={row.id}
-                            />
-                          </div>
-                        </TableCell>
-                      ))}
-                      {columnVisibility.error === true && (
-                        <TableCell
-                          className={cn(
-                            "p-2",
-                            "align-baseline",
-                            "min-w-96",
-                            "flex-shrink-0",
-                            "whitespace-pre-wrap",
-                            getDatasetItemError(row.id) === "" && [
-                              "text-muted-foreground",
-                              "italic",
-                            ]
+                          {datasetObj.outputFields.map((outputField) => (
+                            <TableCell
+                              key={outputField.name}
+                              className={cn(
+                                "p-2",
+                                "align-baseline",
+                                "max-w-96",
+                                "flex-shrink-0",
+                                "whitespace-pre-wrap"
+                              )}
+                            >
+                              {completionLoaderMap?.[row.id] ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <>
+                                  <p
+                                    className={cn([
+                                      "overflow-y-auto",
+                                      "max-h-40",
+                                      "whitespace-pre-wrap",
+                                      (datasetRunMap?.[row.id] === undefined ||
+                                        datasetRunMap?.[row.id].output ===
+                                          "") && [
+                                        "text-muted-foreground",
+                                        "italic",
+                                      ],
+                                    ])}
+                                  >
+                                    {getDatasetItemOutput({
+                                      outputField,
+                                      datasetRowId: row.id,
+                                    })}
+                                  </p>
+                                  <div className="flex justify-end">
+                                    <IndexDatasetTemplateRunDialog
+                                      datasetId={dataset.id}
+                                      templateId={template.id}
+                                      datasetRowId={row.id}
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </TableCell>
+                          ))}
+                          {columnVisibility.error === true && (
+                            <TableCell
+                              className={cn(
+                                "p-2",
+                                "align-baseline",
+                                "max-w-96",
+                                "flex-shrink-0",
+                                "whitespace-pre-wrap",
+                                getDatasetItemError(row.id) === "" &&
+                                  completionLoaderMap?.[row.id] !== true && [
+                                    "text-muted-foreground",
+                                    "italic",
+                                  ]
+                              )}
+                            >
+                              {completionLoaderMap?.[row.id] ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : getDatasetItemError(row.id) === "" ? (
+                                <p>No error.</p>
+                              ) : (
+                                <p>{getDatasetItemError(row.id)}</p>
+                              )}
+                            </TableCell>
                           )}
-                        >
-                          {completionLoaderMap?.[row.id] ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : getDatasetItemError(row.id) === "" ? (
-                            <p>No error.</p>
-                          ) : (
-                            <p>{getDatasetItemError(row.id)}</p>
-                          )}
-                        </TableCell>
+                        </>
                       )}
                     </TableRow>
                   </ContextMenuTrigger>
