@@ -182,7 +182,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             "datasets",
           ]
         }
-        className="w-full px-0 md:px-2"
+        className="w-full space-y-2"
         onValueChange={(value) => {
           setConfig("indexTemplateOpenAccordion", value);
         }}
@@ -277,7 +277,6 @@ export const TemplateSection: FC<TemplateSection> = ({
                 <CodeMirrorWithError
                   readOnly={true}
                   className="w-full"
-                  theme={resolvedTheme === "dark" ? "dark" : "light"}
                   value={JSON.stringify(selectedParameters, null, 2)}
                   extensions={[json()]}
                 />
@@ -292,8 +291,7 @@ export const TemplateSection: FC<TemplateSection> = ({
           <AccordionContent>
             <div className="w-full flex flex-col space-y-4">
               <p className="text-muted-foreground text-sm">
-                Connect datasets to this template to refer how the prompt should
-                be used.
+                Connect datasets that are compatible with this template.
               </p>
               <div
                 className={cn(
@@ -311,7 +309,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                   <div
                     key={templateDataset.id}
                     className={cn(
-                      "justify-between w-full px-3 py-2 flex items-center gap-2"
+                      "justify-between w-full px-3 h-10 flex items-center gap-2"
                     )}
                   >
                     <Button

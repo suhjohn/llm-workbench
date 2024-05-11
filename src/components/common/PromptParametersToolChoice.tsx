@@ -80,7 +80,6 @@ export const PromptParametersToolChoice: FC<
           onChange={(value) => {
             onChange(toggleType, value);
           }}
-          theme={resolvedTheme === "dark" ? "dark" : "light"}
           value={JSON.stringify(value, null, 2)}
           extensions={[json()]}
         />

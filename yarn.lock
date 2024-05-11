@@ -964,6 +964,20 @@
   dependencies:
     "@uiw/codemirror-themes" "4.22.0"
 
+"@uiw/codemirror-theme-vscode@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-vscode/-/codemirror-theme-vscode-4.22.0.tgz#57e52ec9abbd30e00bb7e4e14c71cd4dd25a035e"
+  integrity sha512-Ojy9B3SvCQ5I9Y+y2uBkU6iTwC9cnaQvVTw0cuTKtHp6pGYvDY2tBbxTqx05g4EaZWPQh0gn2QHokAr6F8yItQ==
+  dependencies:
+    "@uiw/codemirror-themes" "4.22.0"
+
+"@uiw/codemirror-theme-xcode@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-xcode/-/codemirror-theme-xcode-4.22.0.tgz#e10b50f4deba4824a3af8e8ae50b78cd32e6d474"
+  integrity sha512-qnkBQa1BVJJ3OiFgZtfR0s+HH5W9mLjX5yipXrFW047RgePWspfxe62V025pz9FstC7lLzlkZSdB8Iuyu+l24g==
+  dependencies:
+    "@uiw/codemirror-themes" "4.22.0"
+
 "@uiw/codemirror-themes@4.22.0":
   version "4.22.0"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.22.0.tgz#79b0d1775c007b8507b7207be9a1851040dc9c48"

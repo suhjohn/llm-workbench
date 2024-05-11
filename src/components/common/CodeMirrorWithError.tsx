@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils";
+import { vscodeDark } from "@uiw/codemirror-theme-vscode";
+import { xcodeLight } from "@uiw/codemirror-theme-xcode";
 import CodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
+import { useTheme } from "next-themes";
 import { FC, useState } from "react";
 import { ZodError } from "zod";
 type CodeMirrorWithErrorProps = {
@@ -13,9 +16,11 @@ export const CodeMirrorWithError: FC<CodeMirrorWithErrorProps> = ({
   ...props
 }) => {
   const [error, setError] = useState<string | undefined>(undefined);
+  const { resolvedTheme } = useTheme();
   return (
-    <div className="flex flex-col w-full space-y-2">
+    <div className="flex flex-col w-full space-y-2 bg-accent rounded-md overflow-hidden">
       <CodeMirror
+        theme={resolvedTheme === "dark" ? vscodeDark : xcodeLight}
         {...props}
         onChange={(value) => {
           try {

@@ -389,7 +389,6 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       [key]: value,
                     });
                   }}
-                  theme={resolvedTheme === "dark" ? "dark" : "light"}
                   value={
                     typeof value === "string"
                       ? value
@@ -444,7 +443,6 @@ export const PromptParameters: FC<PromptParametersProps> = ({
                       [key]: parsedValue,
                     });
                   }}
-                  theme={resolvedTheme === "dark" ? "dark" : "light"}
                   value={JSON.stringify(value, null, 2)}
                   extensions={[json()]}
                 />

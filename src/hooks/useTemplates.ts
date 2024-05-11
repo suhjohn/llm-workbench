@@ -86,6 +86,29 @@ export const useUpdateTemplate = () => {
           t.id === template.id ? template : t
         )
       );
+      // Update template in dataset templates
+      const templateDatasets = queryClient.getQueryData(
+        getTemplateDatasetsQueryKey(template.id)
+      ) as PromptTemplateDatasetType[] | undefined;
+
+      templateDatasets?.forEach(
+        (templateDataset: PromptTemplateDatasetType) => {
+          const datasetTemplates = queryClient.getQueryData(
+            getDatasetTemplatesQueryKey(templateDataset.datasetId)
+          ) as PromptTemplateDatasetType[] | undefined;
+          if (!datasetTemplates) {
+            return;
+          }
+          queryClient.setQueryData(
+            getDatasetTemplatesQueryKey(templateDataset.datasetId),
+            datasetTemplates.map((datasetTemplate) =>
+              datasetTemplate.promptTemplateId === template.id
+                ? { ...datasetTemplate, template }
+                : datasetTemplate
+            )
+          );
+        }
+      );
     },
   });
 };

@@ -18,6 +18,7 @@ import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
 import { TemplateList } from "./TemplateList";
 import { Button } from "./ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function IndexPage() {
   const { templateView, datasetView, selectedTemplateId, selectedDatasetId } =
@@ -46,7 +47,6 @@ export default function IndexPage() {
   const { data: datasets } = useDatasets();
 
   const templatesMap = useMemo(() => {
-    console.log(templates)
     return templates?.reduce((acc, template) => {
       acc[template.id] = template;
       return acc;
@@ -76,13 +76,14 @@ export default function IndexPage() {
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { mutateAsync: updateDataset } = useUpdateDataset();
   const { navigateToNewParams } = useNavigateToNewParams();
-
+  
   const debouncedUpdateTemplate = useDebounceCallback(updateTemplate, 500);
   const debouncedUpdateDataset = useDebounceCallback(updateDataset, 500);
 
   const handleUpdateTemplate = (newTemplate: PromptTemplateType) => {
     setTemplate(newTemplate);
     debouncedUpdateTemplate(newTemplate);
+
     navigateToNewParams({ templateId: newTemplate.id });
   };
 

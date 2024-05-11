@@ -14,14 +14,7 @@ import { DatasetType, OutputFieldType } from "@/types/dataset";
 import { JsonValue } from "@/types/json";
 import { PromptTemplateType } from "@/types/prompt";
 import { useMutation } from "@tanstack/react-query";
-import {
-  ChevronDownIcon,
-  ChevronLeft,
-  Loader2,
-  Play,
-  Plus,
-  Trash2Icon,
-} from "lucide-react";
+import { ChevronLeft, Loader2, Play, Plus, Trash2Icon } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { IndexDatasetTemplateRunDialog } from "./IndexDatasetTemplateRunDialog";
@@ -38,11 +31,12 @@ import {
   ContextMenuTrigger,
 } from "./ui/context-menu";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "./ui/select";
 import {
   Table,
   TableBody,
@@ -358,11 +352,11 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       </div>
       <Card className="flex flex-col overflow-hidden h-full">
         <CardHeader className="h-auto p-2 border-b">
-          <div className="flex justify-between">
+          <div className="flex-col md:flex-row gap-2 flex justify-between">
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                className="space-x-2"
+                className="w-full md:w-auto space-x-2"
                 onClick={createRow}
               >
                 <Plus size={16} />
@@ -380,51 +374,32 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 </Button>
               )}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  {`Outputs from '${template.name}'`}{" "}
-                  <ChevronDownIcon className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+            <Select
+              value={template.id}
+              onValueChange={(value) => {
+                onClickTemplate(value);
+              }}
+            >
+              <SelectTrigger className="w-full md:w-auto md:max-w-96">
+                <SelectValue placeholder="Select a connected template">
+                  {datasetTemplates?.find(
+                    (datasetTemplate) =>
+                      datasetTemplate.template.id === template.id
+                  )?.template.name ?? "Select a connected template"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="w-full md:w-auto md:max-w-96">
                 {datasetTemplates?.map((datasetTemplate) => (
-                  <DropdownMenuItem
-                    key={datasetTemplate.id}
-                    aria-selected={datasetTemplate.template.id === template.id}
-                    onClick={() => {
-                      onClickTemplate(datasetTemplate.template.id);
-                    }}
+                  <SelectItem
+                    key={datasetTemplate.template.id}
+                    value={datasetTemplate.template.id}
+                    className="whitespace-pre-wrap"
                   >
                     {datasetTemplate.template.name}
-                  </DropdownMenuItem>
+                  </SelectItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {/* <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {Object.entries(columnVisibility).map(([column, value]) => (
-                  <DropdownMenuCheckboxItem
-                    key={column}
-                    className="capitalize"
-                    checked={value}
-                    onCheckedChange={(value) => {
-                      setColumnVisibility((prev) => ({
-                        ...prev,
-                        [column]: value,
-                      }));
-                    }}
-                  >
-                    {column}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu> */}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col overflow-hidden h-full p-0">
