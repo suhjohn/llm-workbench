@@ -106,6 +106,19 @@ export const useDeleteTemplate = () => {
           PromptTemplateSchema.parse(template)
         )
       );
+      const templateDatasetsTable = await localForageStore.getItem<
+        PromptTemplateDatasetType[]
+      >(getTemplateDatasetsLocalStorageKey());
+      if (!templateDatasetsTable) {
+        return;
+      }
+      const newTemplateDatasetsTable = templateDatasetsTable.filter(
+        (item) => item.promptTemplateId !== id
+      );
+      await localForageStore.setItem(
+        getTemplateDatasetsLocalStorageKey(),
+        newTemplateDatasetsTable
+      );
     },
   });
 };
@@ -184,7 +197,12 @@ export const useDatasetTemplates = (datasetId: string) => {
             dataset: datasetTable[templateDataset.datasetId],
             template: templateTable[templateDataset.promptTemplateId],
           };
-        });
+        })
+        .filter(
+          (templateDataset) =>
+            templateDataset.template !== undefined &&
+            templateDataset.dataset !== undefined
+        );
     },
   });
 };

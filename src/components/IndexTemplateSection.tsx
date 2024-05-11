@@ -7,6 +7,7 @@ import {
   useDeleteTemplateDataset,
   useTemplateDatasets,
 } from "@/hooks/useTemplates";
+import { cn } from "@/lib/utils";
 import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
@@ -294,11 +295,24 @@ export const TemplateSection: FC<TemplateSection> = ({
                 Connect datasets to this template to refer how the prompt should
                 be used.
               </p>
-              <div className="w-full flex flex-col gap-2 border border-gray-200 dark:border-gray-800 rounded-md">
+              <div
+                className={cn(
+                  "w-full",
+                  "flex",
+                  "flex-col",
+                  "border",
+                  "border-gray-200",
+                  "dark:border-gray-800",
+                  "rounded-md",
+                  "divide-y divide-background-foreground"
+                )}
+              >
                 {templateDatasets?.map((templateDataset) => (
                   <div
                     key={templateDataset.id}
-                    className="justify-between w-full px-3 py-2 flex items-center gap-2"
+                    className={cn(
+                      "justify-between w-full px-3 py-2 flex items-center gap-2"
+                    )}
                   >
                     <Button
                       variant={"link"}
