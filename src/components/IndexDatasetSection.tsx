@@ -2,6 +2,7 @@ import { useCreateCompletion } from "@/hooks/useCreateCompletion";
 import { useCreateDatasetRun, useDatasetRuns } from "@/hooks/useDatasetRuns";
 import { useDatasetObjById } from "@/hooks/useDatasets";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
+import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
 import { useResources } from "@/hooks/useResources";
 import { useCreateTemplateDataset } from "@/hooks/useTemplates";
 import { compile } from "@/lib/parser";
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { IndexDatasetTemplateRunDialog } from "./IndexDatasetTemplateRunDialog";
 import { ArrayInput } from "./common/ArrayInput";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
@@ -46,7 +48,6 @@ import {
   TableRow,
 } from "./ui/table";
 import { useToast } from "./ui/use-toast";
-import { IndexDatasetTemplateRunDialog } from "./IndexDatasetTemplateRunDialog";
 
 type DatasetSectionProps = {
   template: PromptTemplateType;
@@ -67,6 +68,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   setDataset,
   onClickBack,
 }) => {
+  const { templateView } = useIndexSearchParams();
   const {
     datasetObj,
     addColumns,
@@ -261,7 +263,16 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       description: `Added ${JSON.stringify(diff)} successfully.`,
     });
   };
-
+  const handleConnectTemplate = () => {
+    createTemplateDataset({
+      datasetId: dataset.id,
+      templateId: template.id,
+    });
+    toast({
+      title: `Connected template`,
+      description: `Added '${dataset.name}' to connected datasets for '${template.name}' successfully.`,
+    });
+  };
   const handleRemoveColumns = ({ columns }: { columns: string[] }) => {
     removeColumns(columns);
     toast({
@@ -313,18 +324,11 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           parse={(value) => value}
         />
         <div className="flex space-x-2">
-          <Button
-            variant={"outline"}
-            onClick={() => {
-              createTemplateDataset({
-                datasetId: dataset.id,
-                templateId: template.id,
-              });
-            }}
-          >
-            <p>Connect template</p>
-          </Button>
-
+          {templateView === "detail" && (
+            <Button variant={"outline"} onClick={handleConnectTemplate}>
+              <p>Connect template</p>
+            </Button>
+          )}
           <Button
             onClick={() => runAllCompletions()}
             disabled={datasetObj.data.length === 0 || isRunningAllCompletions}

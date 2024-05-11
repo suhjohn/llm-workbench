@@ -2,6 +2,7 @@
 import { TopNavigation } from "@/components/common/TopNavigation";
 import { useCookieConfigContext } from "@/hooks/useCookieContext";
 import { useDatasets, useUpdateDataset } from "@/hooks/useDatasets";
+import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
 import { useNavigateToNewParams } from "@/hooks/useNavigation";
 import { useHorizontalResize } from "@/hooks/useResize";
 import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
@@ -9,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetType } from "@/types/dataset";
 import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
 import { AlignHorizontalDistributeCenter } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { v4 as uuidv4 } from "uuid";
@@ -20,7 +20,8 @@ import { TemplateList } from "./TemplateList";
 import { Button } from "./ui/button";
 
 export default function IndexPage() {
-  const searchParams = useSearchParams();
+  const { templateView, datasetView, selectedTemplateId, selectedDatasetId } =
+    useIndexSearchParams();
   const { config, setConfig } = useCookieConfigContext();
   const { width, setWidth, isResized } = useHorizontalResize({
     initialWidth: config.indexHorizontalDividerWidth ?? 0,
@@ -28,11 +29,6 @@ export default function IndexPage() {
       setConfig("indexHorizontalDividerWidth", width);
     },
   });
-
-  const templateView = searchParams.get("templateView") ?? "detail"; // list or detail
-  const datasetView = searchParams.get("datasetView") ?? "detail"; // list or detail
-  const selectedTemplateId = searchParams.get("templateId");
-  const selectedDatasetId = searchParams.get("datasetId");
 
   const [template, setTemplate] = useState<PromptTemplateType>({
     ...DEFAULT_TEMPLATE,
