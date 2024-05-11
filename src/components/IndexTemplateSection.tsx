@@ -1,5 +1,5 @@
 "use client";
-import { OpenAIChatCompletionResource } from "@/fixtures/resources";
+import { Resources } from "@/fixtures/resources";
 import { useCookieConfigContext } from "@/hooks/useCookieContext";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useResources } from "@/hooks/useResources";
@@ -165,7 +165,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {[OpenAIChatCompletionResource].map((resource) => (
+            {Resources.map((resource) => (
               <SelectItem key={resource.id} value={resource.id}>
                 {resource.name}
               </SelectItem>

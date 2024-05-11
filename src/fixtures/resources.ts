@@ -53,8 +53,5 @@ export const OpenRouterChatCompletionResource = {
 
 export const Resources = [
   OpenAIChatCompletionResource,
-  AnthropicChatCompletionResource,
   TogetherChatCompletionResource,
-  TogetherCompletionResource,
-  OpenRouterChatCompletionResource,
 ];

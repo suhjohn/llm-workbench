@@ -1,12 +1,11 @@
-import { OpenAIChatCompletionResource } from "@/fixtures/resources";
 import { cn } from "@/lib/utils";
-import {
-  OpenAIChatCompletionPromptParametersSchema,
-} from "@/types/resources/openai";
 import { json } from "@codemirror/lang-json";
 
 import { PromptTemplateType } from "@/types/prompt";
-import { ResourceParameterKeyType } from "@/types/resources";
+import {
+  ResourceParameterKeyType,
+  ResourceParameterSchemaMap,
+} from "@/types/resources";
 import { ParameterInputSchema } from "@/types/resources/common";
 import { PlusIcon } from "lucide-react";
 import { FC } from "react";
@@ -32,10 +31,6 @@ type PromptParametersProps = {
   setTemplate: (template: PromptTemplateType) => void;
 };
 
-const resourceIdToParameterSchema = {
-  [OpenAIChatCompletionResource.id]: OpenAIChatCompletionPromptParametersSchema,
-};
-
 export const PromptParameters: FC<PromptParametersProps> = ({
   template,
   setTemplate,
@@ -45,7 +40,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
     enabledParameters,
     resourceId,
   } = template;
-  const resourceParameterSchema = resourceIdToParameterSchema[resourceId];
+  const resourceParameterSchema = ResourceParameterSchemaMap[resourceId];
   if (resourceParameterSchema === undefined) {
     throw new Error(`No schema found for resource ${resourceId}`);
   }
