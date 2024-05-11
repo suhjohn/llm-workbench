@@ -148,6 +148,8 @@ export const TemplateSection: FC<TemplateSection> = ({
             parse={(value) => value}
           />
         </div>
+      </div>
+      <div>
         <Select
           value={resourceId}
           onValueChange={(value) => {
@@ -157,7 +159,7 @@ export const TemplateSection: FC<TemplateSection> = ({
             });
           }}
         >
-          <SelectTrigger className="w-full md:w-64 flex-shrink-0">
+          <SelectTrigger className="w-full flex-shrink-0">
             <SelectValue>
               {selectedResource?.name || "Select a resource"}
             </SelectValue>

@@ -123,13 +123,13 @@ export const useDatasetObj = (datasetId: string | null) => {
     queryKey: [DATASET_OBJ_QUERY_KEY, { datasetId }],
     queryFn: async () => {
       if (!datasetId) {
-        return undefined;
+        return null;
       }
       const dataObj = await localForageStore.getItem<{
         [x: string]: unknown;
       }>(`${getDatasetObjStorageKey(datasetId)}`);
       if (!dataObj) {
-        return undefined;
+        return null;
       }
       return DatasetDataSchema.parse(dataObj);
     },

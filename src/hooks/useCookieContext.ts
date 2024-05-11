@@ -1,5 +1,5 @@
 import { CookieContext } from "@/providers/CookieProvider";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { z } from "zod";
 
 // Hook to use the Cookie context
@@ -29,15 +29,19 @@ export const useCookieConfigContext = () => {
     ? JSON.parse(context.cookies.config)
     : {};
   const config = CookieConfigSchema.parse(rawConfig);
-  const setConfig = (key: keyof CookieConfig, value: any) => {
-    const currentConfig = context.cookies.config
-      ? JSON.parse(context.cookies.config)
-      : {};
-    context.setNewCookie(
-      "config",
-      JSON.stringify({ ...currentConfig, [key]: value })
-    );
-  };
+  const setConfig = useCallback(
+    (key: keyof CookieConfig, value: any) => {
+      const currentConfig = context.cookies.config
+        ? JSON.parse(context.cookies.config)
+        : {};
+      context.setNewCookie(
+        "config",
+        JSON.stringify({ ...currentConfig, [key]: value })
+      );
+    },
+    [context]
+  );
+
   return {
     config,
     setConfig,

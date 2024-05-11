@@ -9,7 +9,6 @@ import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetType } from "@/types/dataset";
 import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
-import { AlignHorizontalDistributeCenter } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { v4 as uuidv4 } from "uuid";
@@ -17,8 +16,6 @@ import { DatasetList } from "./DatasetList";
 import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
 import { TemplateList } from "./TemplateList";
-import { Button } from "./ui/button";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function IndexPage() {
   const { templateView, datasetView, selectedTemplateId, selectedDatasetId } =
@@ -76,7 +73,7 @@ export default function IndexPage() {
   const { mutateAsync: updateTemplate } = useUpdateTemplate();
   const { mutateAsync: updateDataset } = useUpdateDataset();
   const { navigateToNewParams } = useNavigateToNewParams();
-  
+
   const debouncedUpdateTemplate = useDebounceCallback(updateTemplate, 500);
   const debouncedUpdateDataset = useDebounceCallback(updateDataset, 500);
 
@@ -108,7 +105,7 @@ export default function IndexPage() {
     debouncedUpdateDataset(newDataset);
     navigateToNewParams({ datasetId: newDataset.id });
   };
-
+  
   return (
     <div className={"flex relative flex-col space-y-0 md:h-[100dvh] w-[100vw]"}>
       <TopNavigation />
@@ -143,20 +140,14 @@ export default function IndexPage() {
           )}
         </div>
         <div className="hidden md:flex space-y-2 h-full flex-col items-center">
-          <Button
-            className="w-auto px-1.5 py-1.5 w-auto h-auto"
-            variant="outline"
-            onClick={() => {
-              setWidth(0);
-              setConfig("indexHorizontalDividerWidth", 0);
-            }}
-          >
-            <AlignHorizontalDistributeCenter size={12} />
-          </Button>
           <div
-            className="mx-[2px] h-full w-[2px] cursor-col-resize bg-muted hover:bg-blue-500 flex flex-shrink-0"
+            className="mx-[2px] h-full w-[2px] cursor-col-resize bg-muted hover:bg-blue-500 hover:w-[4px] hover:mx-[1px] transition duration-200"
             onMouseDown={() => {
               isResized.current = true;
+            }}
+            onDoubleClick={() => {
+              setWidth(0);
+              setConfig("indexHorizontalDividerWidth", 0);
             }}
           />
         </div>

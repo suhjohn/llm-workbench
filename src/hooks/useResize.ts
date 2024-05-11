@@ -19,13 +19,11 @@ export const useHorizontalResize = ({
         env === "development"
           ? (prevWidth: number) => {
               const newWidth = prevWidth - e.movementX;
-              onResize?.(newWidth);
               return newWidth;
             }
           : (prevWidth: number) => {
               // * 2 is because the boxes are under flex and with flex-shrink you need this hack
               const newWidth = prevWidth - e.movementX * 2;
-              onResize?.(newWidth);
               return newWidth;
             };
       setWidth(nextWidth);
@@ -34,7 +32,12 @@ export const useHorizontalResize = ({
       isResized.current = false;
     });
   }, []);
-  
+  useEffect(() => {
+    if (onResize) {
+      onResize(width);
+    }
+  }, [width]);
+
   return {
     width,
     setWidth,
