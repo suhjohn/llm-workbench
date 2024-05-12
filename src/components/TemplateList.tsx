@@ -103,7 +103,8 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               "disabled:opacity-50",
               "justify-between",
               "px-2",
-              "h-10",
+              "py-1",
+              "min-h-10",
               "flex",
               "flex-shrink-0",
               "text-left",
@@ -116,7 +117,12 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               onClickTemplate(template.id);
             }}
           >
-            <p className="text-left justify-start px-0 text-color-primary">
+            <p
+              className={cn(
+                "text-left justify-start px-0 text-color-primary",
+                "whitespace-pre-wrap"
+              )}
+            >
               {template.name}
             </p>
             <div className="flex space-x-4 items-center">

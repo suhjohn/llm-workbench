@@ -21,6 +21,7 @@ const SelectTrigger = React.forwardRef<
     className={cn(
       "flex",
       "min-h-8",
+      "h-auto",
       "w-full",
       "items-center",
       "justify-between",
@@ -29,7 +30,6 @@ const SelectTrigger = React.forwardRef<
       "border-input",
       "bg-background",
       "px-3",
-      "py-2",
       "text-sm",
       "ring-offset-background",
       "placeholder:text-muted-foreground",
@@ -176,6 +176,5 @@ export {
   SelectScrollUpButton,
   SelectSeparator,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 };
-
