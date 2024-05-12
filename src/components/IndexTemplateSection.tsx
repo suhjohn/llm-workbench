@@ -27,6 +27,7 @@ import {
 } from "./ui/accordion";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader } from "./ui/card";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -35,15 +36,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 type TemplateSection = {
+  isLoadingTemplate: boolean;
   template: PromptTemplateType;
   setTemplate: (template: PromptTemplateType) => void;
   onClickBack?: () => void;
 };
 
 export const TemplateSection: FC<TemplateSection> = ({
+  isLoadingTemplate,
   template: templateObj,
   setTemplate,
   onClickBack,
@@ -149,6 +153,41 @@ export const TemplateSection: FC<TemplateSection> = ({
           />
         </div>
       </div>
+      <Card>
+        <CardHeader>
+          <Label>Metadata</Label>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div>
+            <Label>Id</Label>
+            {isLoadingTemplate ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <p className={cn("text-xs")}>{templateObj.id}</p>
+            )}
+          </div>
+          <div>
+            <Label>Created</Label>
+            {isLoadingTemplate ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <p className={cn("text-xs")}>
+                {new Date(templateObj.createdAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label>Updated</Label>
+            {isLoadingTemplate ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <p className={cn("text-xs")}>
+                {new Date(templateObj.updatedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
       <div>
         <Select
           value={resourceId}

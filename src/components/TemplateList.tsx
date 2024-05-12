@@ -6,7 +6,7 @@ import {
 import { formatAppleDate } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 import { DEFAULT_TEMPLATE } from "@/types/prompt";
-import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
+import { Copy, Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -41,6 +41,19 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
       updatedAt: new Date().toISOString(),
     });
   };
+
+  const handleCopyTemplate = async (id: string) => {
+    const template = templates?.find((template) => template.id === id);
+    if (!template) return;
+    await createTemplate({
+      ...template,
+      id: uuidv4(),
+      name: `${template.name} (Copy)`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
   const handleDeleteTemplate = async (id: string) => {
     const newSearchParams = new URLSearchParams();
     searchParams.forEach((value, key) => {
@@ -96,7 +109,7 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               "text-left",
               "items-center",
               "hover:text-accent hover:bg-accent hover:text-accent-foreground aria-selected:bg-accent/90",
-              "cursor-pointer",
+              "cursor-pointer"
             )}
             aria-selected={selectedTemplateId === template.id}
             onClick={() => {
@@ -127,6 +140,16 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
                   <MoreHorizontal size={16} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    className="space-x-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyTemplate(template.id);
+                    }}
+                  >
+                    <Copy size={16} />
+                    <p>Copy</p>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="space-x-2 text-red-500"
                     onClick={(e) => {

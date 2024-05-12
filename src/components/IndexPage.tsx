@@ -16,6 +16,7 @@ import { DatasetList } from "./DatasetList";
 import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
 import { TemplateList } from "./TemplateList";
+import { Loader2 } from "lucide-react";
 
 export default function IndexPage() {
   const { templateView, datasetView, selectedTemplateId, selectedDatasetId } =
@@ -27,7 +28,7 @@ export default function IndexPage() {
       setConfig("indexHorizontalDividerWidth", width);
     },
   });
-
+  const [isRendered, setIsRendered] = useState(false);
   const [template, setTemplate] = useState<PromptTemplateType>({
     ...DEFAULT_TEMPLATE,
     id: uuidv4(),
@@ -42,6 +43,9 @@ export default function IndexPage() {
   });
   const { data: templates } = useTemplates();
   const { data: datasets } = useDatasets();
+  useEffect(() => {
+    setIsRendered(true);
+  }, []);
 
   const templatesMap = useMemo(() => {
     return templates?.reduce((acc, template) => {
@@ -105,78 +109,90 @@ export default function IndexPage() {
     debouncedUpdateDataset(newDataset);
     navigateToNewParams({ datasetId: newDataset.id });
   };
-  
+
+  const isLoadingTemplate =
+    templateView === "detail" &&
+    selectedTemplateId !== null &&
+    selectedTemplateId !== template.id;
+
   return (
     <div className={"flex relative flex-col space-y-0 md:h-[100dvh] w-[100vw]"}>
       <TopNavigation />
-      <div
-        className={cn(
-          "w-full",
-          "h-full",
-          "flex",
-          "gap-4",
-          "p-4",
-          "min-h-96",
-          "md:min-h-auto",
-          "md:p-2",
-          "flex-col",
-          "md:flex-row",
-          "overflow-hidden"
-        )}
-      >
-        <div
-          className={cn("w-full", "flex", "space-x-2", "overflow-hidden")}
-          style={{ width: `calc(100% - ${width}px)` }}
-        >
-          {templateView === "list" && (
-            <TemplateList onClickTemplate={handleClickTemplate} />
-          )}
-          {templateView === "detail" && (
-            <TemplateSection
-              template={template}
-              setTemplate={handleUpdateTemplate}
-              onClickBack={handleClickBackTemplate}
-            />
-          )}
+      {isRendered === false ? (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <Loader2 className="animate-spin" />
         </div>
-        <div className="hidden md:flex space-y-2 h-full flex-col items-center">
-          <div
-            className="mx-[2px] h-full w-[2px] cursor-col-resize bg-muted hover:bg-blue-500 hover:w-[4px] hover:mx-[1px] transition duration-200"
-            onMouseDown={() => {
-              isResized.current = true;
-            }}
-            onDoubleClick={() => {
-              setWidth(0);
-              setConfig("indexHorizontalDividerWidth", 0);
-            }}
-          />
-        </div>
+      ) : (
         <div
           className={cn(
             "w-full",
             "h-full",
             "flex",
-            "space-x-2",
-            "overflow-hidden",
+            "gap-4",
+            "p-4",
             "min-h-96",
-            "md:min-h-auto"
+            "md:min-h-auto",
+            "md:p-2",
+            "flex-col",
+            "md:flex-row",
+            "overflow-hidden"
           )}
-          style={{ width: `calc(100% + ${width}px)` }}
         >
-          {datasetView === "list" && (
-            <DatasetList onClickDataset={handleClickDataset} />
-          )}
-          {datasetView === "detail" && (
-            <DatasetSection
-              dataset={dataset}
-              setDataset={handleUpdateDataset}
-              template={template}
-              onClickTemplate={handleClickTemplate}
-              onClickBack={handleClickBackDataset}
+          <div
+            className={cn("w-full", "flex", "space-x-2", "overflow-hidden")}
+            style={{ width: `calc(100% - ${width}px)` }}
+          >
+            {templateView === "list" && (
+              <TemplateList onClickTemplate={handleClickTemplate} />
+            )}
+            {templateView === "detail" && (
+              <TemplateSection
+                isLoadingTemplate={isLoadingTemplate}
+                template={template}
+                setTemplate={handleUpdateTemplate}
+                onClickBack={handleClickBackTemplate}
+              />
+            )}
+          </div>
+          <div className="hidden md:flex space-y-2 h-full flex-col items-center">
+            <div
+              className="mx-[2px] h-full w-[2px] cursor-col-resize bg-muted hover:bg-blue-500 hover:w-[4px] hover:mx-[1px] transition duration-200"
+              onMouseDown={() => {
+                isResized.current = true;
+              }}
+              onDoubleClick={() => {
+                setWidth(0);
+                setConfig("indexHorizontalDividerWidth", 0);
+              }}
             />
-          )}
+          </div>
+          <div
+            className={cn(
+              "w-full",
+              "h-full",
+              "flex",
+              "space-x-2",
+              "overflow-hidden",
+              "min-h-96",
+              "md:min-h-auto"
+            )}
+            style={{ width: `calc(100% + ${width}px)` }}
+          >
+            {datasetView === "list" && (
+              <DatasetList onClickDataset={handleClickDataset} />
+            )}
+            {datasetView === "detail" && (
+              <DatasetSection
+                dataset={dataset}
+                setDataset={handleUpdateDataset}
+                template={template}
+                onClickTemplate={handleClickTemplate}
+                onClickBack={handleClickBackDataset}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
