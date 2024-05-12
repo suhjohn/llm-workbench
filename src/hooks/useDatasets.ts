@@ -6,9 +6,14 @@ import {
   DatasetType,
   OutputFieldType,
 } from "@/types/dataset";
+import { PromptTemplateDatasetType } from "@/types/prompt";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import {
+  getTemplateDatasetsLocalStorageKey,
+  getTemplateDatasetsQueryKey,
+} from "./useTemplates";
 
 export const DATASETS_QUERY_KEY = "datasets";
 
@@ -35,7 +40,7 @@ export const useDatasets = () => {
           id,
           DatasetSchema.parse(dataset),
         ]) ?? []
-      )
+      );
     },
   });
 };
@@ -114,6 +119,29 @@ export const useDeleteDataset = () => {
       delete datasets[datasetId];
       await localForageStore.setItem(DATASETS_LOCAL_STORAGE_KEY, datasets);
       queryClient.setQueryData([DATASETS_QUERY_KEY], datasets);
+
+      /** Cascade delete template datasets */
+      const templateDatasetsTable = await localForageStore.getItem<
+        PromptTemplateDatasetType[]
+      >(getTemplateDatasetsLocalStorageKey());
+      if (!templateDatasetsTable) {
+        return;
+      }
+      const updatedTemplateDatasetsTable = templateDatasetsTable.filter(
+        (item) => item.datasetId !== datasetId
+      );
+      const relatedTemplateIds = templateDatasetsTable
+        .filter((item) => item.datasetId === datasetId)
+        .map((item) => item.promptTemplateId);
+      await localForageStore.setItem(
+        getTemplateDatasetsLocalStorageKey(),
+        updatedTemplateDatasetsTable
+      );
+      relatedTemplateIds.forEach((templateId) => {
+        queryClient.resetQueries({
+          queryKey: getTemplateDatasetsQueryKey(templateId),
+        });
+      });
     },
   });
 };

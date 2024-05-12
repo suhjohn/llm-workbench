@@ -393,7 +393,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                         handleClickDataset(templateDataset.datasetId);
                       }}
                     >
-                      <p>{templateDataset.dataset.name}</p>
+                      <p>{templateDataset.dataset?.name || "Unknown"}</p>
                     </Button>
                     <Button
                       className="flex-shirnk-0"

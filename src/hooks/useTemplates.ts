@@ -154,6 +154,7 @@ export const useDeleteTemplate = () => {
   });
 };
 
+/** Todo: Refactor query state for more efficient client-side manipulation */
 export const useTemplateDatasets = (templateId: string) => {
   return useQuery({
     queryKey: getTemplateDatasetsQueryKey(templateId),
