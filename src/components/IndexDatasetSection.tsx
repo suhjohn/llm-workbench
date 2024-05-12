@@ -657,7 +657,15 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                               ) : getDatasetItemError(row.id) === "" ? (
                                 <p>No error.</p>
                               ) : (
-                                <p>{getDatasetItemError(row.id)}</p>
+                                <pre
+                                  className={cn(
+                                    "text-red-500 whitespace-pre-wrap max-h-40 overflow-y-auto",
+                                    "text-wrap",
+                                    "break-words"
+                                  )}
+                                >
+                                  {getDatasetItemError(row.id)}
+                                </pre>
                               )}
                             </TableCell>
                           )}
