@@ -33,15 +33,15 @@ The application solves these specific user problems:
 4. Support all meaningful providers in the ecosystem:
 
 - [x] OpenAI
-- [] Anthropic
-- [] Gemini
+- [ ] Anthropic
+- [ ] Gemini
 - [x] Together
-- [] AWS Bedrock
-- [] Azure
-- [] Anyscale
-- [] Groq
-- [] Openrouter
-- [] User-defined APIs
+- [ ] AWS Bedrock
+- [ ] Azure
+- [ ] Anyscale
+- [ ] Groq
+- [ ] Openrouter
+- [ ] User-defined APIs
 
 
 ## Security
