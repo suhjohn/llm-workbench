@@ -9,14 +9,13 @@ import { useTemplates, useUpdateTemplate } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET, DatasetType } from "@/types/dataset";
 import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
+import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useDebounceCallback } from "usehooks-ts";
 import { v4 as uuidv4 } from "uuid";
 import { DatasetList } from "./DatasetList";
 import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
 import { TemplateList } from "./TemplateList";
-import { Loader2 } from "lucide-react";
 
 export default function IndexPage() {
   const { templateView, datasetView, selectedTemplateId, selectedDatasetId } =
@@ -78,18 +77,15 @@ export default function IndexPage() {
   const { mutateAsync: updateDataset } = useUpdateDataset();
   const { navigateToNewParams } = useNavigateToNewParams();
 
-  const debouncedUpdateTemplate = useDebounceCallback(updateTemplate, 500);
-  const debouncedUpdateDataset = useDebounceCallback(updateDataset, 500);
-
   const handleUpdateTemplate = (newTemplate: PromptTemplateType) => {
     setTemplate(newTemplate);
-    debouncedUpdateTemplate(newTemplate);
+    updateTemplate(newTemplate);
 
     navigateToNewParams({ templateId: newTemplate.id });
   };
 
   const handleClickBackDataset = () => {
-    navigateToNewParams({ datasetView: "list", datasetId: null});
+    navigateToNewParams({ datasetView: "list", datasetId: null });
   };
 
   const handleClickBackTemplate = () => {
@@ -106,7 +102,7 @@ export default function IndexPage() {
 
   const handleUpdateDataset = (newDataset: DatasetType) => {
     setDataset(newDataset);
-    debouncedUpdateDataset(newDataset);
+    updateDataset(newDataset);
     navigateToNewParams({ datasetId: newDataset.id });
   };
 

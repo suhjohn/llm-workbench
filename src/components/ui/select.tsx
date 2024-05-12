@@ -20,7 +20,7 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "flex",
-      "h-8",
+      "min-h-8",
       "w-full",
       "items-center",
       "justify-between",

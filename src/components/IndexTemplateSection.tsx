@@ -209,38 +209,36 @@ export const TemplateSection: FC<TemplateSection> = ({
           </div>
         </CardContent>
       </Card>
-      <div>
-        <Select
-          value={resourceId}
-          onValueChange={(value) => {
-            setTemplate({
-              ...templateObj,
-              resourceId: value,
-            });
-          }}
-        >
-          <SelectTrigger className="w-full flex-shrink-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Resources.map((resource) => (
-              <SelectItem key={resource.id} value={resource.id}>
-                <div className="flex space-x-2">
-                  <div className="relative w-[16px] h-[16px]">
-                    <Image
-                      src={getResourceLogo(resource.id)}
-                      alt={resource.name}
-                      fill
-                      objectFit="contain"
-                    />
-                  </div>
-                  <p>{resource.name}</p>
+      <Select
+        value={resourceId}
+        onValueChange={(value) => {
+          setTemplate({
+            ...templateObj,
+            resourceId: value,
+          });
+        }}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="w-full">
+          {Resources.map((resource) => (
+            <SelectItem key={resource.id} value={resource.id}>
+              <div className="w-full items-center flex space-x-2">
+                <div className="relative w-[16px] h-[16px]">
+                  <Image
+                    src={getResourceLogo(resource.id)}
+                    alt={resource.name}
+                    fill
+                    objectFit="contain"
+                  />
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+                <p>{resource.name}</p>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Accordion
         type="multiple"
         defaultValue={
@@ -359,7 +357,8 @@ export const TemplateSection: FC<TemplateSection> = ({
           <AccordionContent>
             <div className="w-full flex flex-col space-y-4">
               <p className="text-muted-foreground text-sm">
-                Connect datasets that are compatible with this template.
+                Connect datasets that are compatible with this template. This will allow you to
+                easily switch between different datasets applicable to this template.
               </p>
               <div
                 className={cn(
@@ -373,6 +372,13 @@ export const TemplateSection: FC<TemplateSection> = ({
                   "divide-y divide-background-foreground"
                 )}
               >
+                {templateDatasets?.length === 0 && (
+                  <div className="w-full px-3 h-10 flex items-center">
+                    <p className="text-muted-foreground text-sm">
+                      No datasets connected.
+                    </p>
+                  </div>
+                )}
                 {templateDatasets?.map((templateDataset) => (
                   <div
                     key={templateDataset.id}
