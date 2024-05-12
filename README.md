@@ -1,8 +1,8 @@
-# Prompt Repo
+# LLM Workbench
 
-https://www.promptrepo.app/
+https://www.llmwb.com/
 
-Repository of LLM prompts. Test prompt templates across different providers using different variables to fill in the templates. Try other peoples' prompts with their variables.
+Supercharged workbench for LLMs. Test prompt templates across different providers using different variables to fill in the templates.
 
 ![Screenshot](docs/promptrepo-main.png)
 

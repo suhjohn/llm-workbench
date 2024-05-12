@@ -10,7 +10,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
-  title: "PromptRepo",
+  title: "LLM Workbench",
   icons: {
     icon: "/favicon.png",
   },

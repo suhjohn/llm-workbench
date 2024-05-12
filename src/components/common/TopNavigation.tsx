@@ -23,7 +23,7 @@ export const TopNavigation = () => {
       >
         <div className={cn("font-bold")}>
           <Link href="/" className="flex space-x-2 items-center">
-            <p>PromptRepo</p>
+            <p>LLM Workbench</p>
           </Link>
         </div>
         <div className="flex gap-2">
