@@ -43,11 +43,12 @@ The application solves these specific user problems:
 - [ ] User-defined APIs
 
 ## Todo
-1. (Todo) Manual input of prompt arguments as JSON
-2. (Todo) Import CSV 
-3. (Todo) Version control prompts and datasets
+1. Manual input of prompt arguments as JSON
+2. Import CSV 
+3. Version control prompts and datasets
 4. Custom providers and custom models 
-5. Vision API 
+5. Multi-modal input + parameters
+6. Toggle visible columns + show compiled inputs
 
 ## Security
 **The templates / datasets / API keys that you add on the website are only stored locally on your browser.**
