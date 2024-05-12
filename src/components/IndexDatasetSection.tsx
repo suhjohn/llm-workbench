@@ -362,6 +362,16 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 <Plus size={16} />
                 <p>Add row</p>
               </Button>
+
+              <Button
+                variant="outline"
+                className="w-full md:w-auto space-x-2"
+                onClick={() => setOpenAddColumnDialog(true)}
+              >
+                <Plus size={16} />
+                <p>Add column</p>
+              </Button>
+
               {newPromptParametersExists && (
                 <Button
                   variant="outline"
