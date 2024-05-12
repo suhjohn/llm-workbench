@@ -49,6 +49,7 @@ The application solves these specific user problems:
 4. Custom providers and custom models 
 5. Multi-modal input + parameters
 6. Toggle visible columns + show compiled inputs
+7. Default prompts + share data
 
 ## Security
 **The templates / datasets / API keys that you add on the website are only stored locally on your browser.**
