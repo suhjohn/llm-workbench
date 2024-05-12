@@ -67,69 +67,74 @@ export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
         </div>
       )}
       {datasets &&
-        Object.values(datasets).map((dataset) => {
-          return (
-            <Button
-              key={dataset.id}
-              variant="ghost"
-              className={cn(
-                "justify-between",
-                "px-2",
-                "h-10",
-                "flex",
-                "flex-shrink-0",
-                "text-left",
-                "items-center"
-              )}
-              aria-selected={selectedDatasetId === dataset.id}
-              onClick={() => {
-                onClickDataset(dataset.id);
-              }}
-            >
-              <p className="text-left justify-start px-0 text-color-primary">
-                {dataset.name}
-              </p>
-              <div className="flex space-x-4 items-center">
-                <p className="text-xs text-muted-foreground">
-                  {formatAppleDate(new Date(dataset.createdAt))}
+        Object.values(datasets)
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .map((dataset) => {
+            return (
+              <Button
+                key={dataset.id}
+                variant="ghost"
+                className={cn(
+                  "justify-between",
+                  "px-2",
+                  "h-10",
+                  "flex",
+                  "flex-shrink-0",
+                  "text-left",
+                  "items-center"
+                )}
+                aria-selected={selectedDatasetId === dataset.id}
+                onClick={() => {
+                  onClickDataset(dataset.id);
+                }}
+              >
+                <p className="text-left justify-start px-0 text-color-primary">
+                  {dataset.name}
                 </p>
-                <DropdownMenu
-                  open={openMoreActionIndex === dataset.id}
-                  onOpenChange={(isOpen) => {
-                    if (!isOpen) {
-                      setOpenMoreActionIndex(null);
-                    }
-                  }}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      className="px-0 py-0 h-auto p-1"
-                      variant="secondary"
-                      onClick={(e) => {
-                        setOpenMoreActionIndex(dataset.id);
-                        e.stopPropagation();
-                      }}
-                    >
-                      <MoreHorizontal size={16} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem
-                      className="space-x-2 text-red-500"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteDataset(dataset.id);
-                      }}
-                    >
-                      <Trash size={16} />
-                      <p>Delete</p>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </Button>
-          );
-        })}
+                <div className="flex space-x-4 items-center">
+                  <p className="text-xs text-muted-foreground">
+                    {formatAppleDate(new Date(dataset.createdAt))}
+                  </p>
+                  <DropdownMenu
+                    open={openMoreActionIndex === dataset.id}
+                    onOpenChange={(isOpen) => {
+                      if (!isOpen) {
+                        setOpenMoreActionIndex(null);
+                      }
+                    }}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="px-0 py-0 h-auto p-1"
+                        variant="secondary"
+                        onClick={(e) => {
+                          setOpenMoreActionIndex(dataset.id);
+                          e.stopPropagation();
+                        }}
+                      >
+                        <MoreHorizontal size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem
+                        className="space-x-2 text-red-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDataset(dataset.id);
+                        }}
+                      >
+                        <Trash size={16} />
+                        <p>Delete</p>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </Button>
+            );
+          })}
     </div>
   );
 };

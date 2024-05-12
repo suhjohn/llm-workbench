@@ -89,11 +89,11 @@ export default function IndexPage() {
   };
 
   const handleClickBackDataset = () => {
-    navigateToNewParams({ datasetView: "list" });
+    navigateToNewParams({ datasetView: "list", datasetId: null});
   };
 
   const handleClickBackTemplate = () => {
-    navigateToNewParams({ templateView: "list" });
+    navigateToNewParams({ templateView: "list", templateId: null });
   };
 
   const handleClickDataset = (id: string) => {

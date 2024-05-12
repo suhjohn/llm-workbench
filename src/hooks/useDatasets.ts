@@ -35,7 +35,7 @@ export const useDatasets = () => {
           id,
           DatasetSchema.parse(dataset),
         ]) ?? []
-      );
+      )
     },
   });
 };
