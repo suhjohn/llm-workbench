@@ -23,7 +23,6 @@ The application solves these specific user problems:
 - For a specific set of prompt parameters, I want to test out different llm prompts to do a vibe-check on their outputs.
 - (Providers seem to have different default parameters especially for open source models) I want to test the same prompt + model for different providers to understand their behavior
 - I want to view the history of multiple runs for a specific set of parameter that I've provided. 
-- (Todo) Version control the prompts and datasets. 
 
 ## Features
 
@@ -43,6 +42,12 @@ The application solves these specific user problems:
 - [ ] Openrouter
 - [ ] User-defined APIs
 
+## Todo
+1. (Todo) Manual input of prompt arguments as JSON
+2. (Todo) Import CSV 
+3. (Todo) Version control prompts and datasets
+4. Custom providers and custom models 
+5. Vision API 
 
 ## Security
 **The templates / datasets / API keys that you add on the website are only stored locally on your browser.**
