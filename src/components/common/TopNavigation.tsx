@@ -18,7 +18,8 @@ export const TopNavigation = () => {
           "dark:border-b-gray-800",
           "justify-between",
           "py-2",
-          "px-4"
+          "px-4",
+          "items-center"
         )}
       >
         <div className={cn("font-bold")}>
