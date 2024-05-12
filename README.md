@@ -4,7 +4,7 @@ https://www.llmwb.com/
 
 Supercharged workbench for LLMs. Test prompt templates across different providers using different variables to fill in the templates.
 
-![Screenshot](docs/promptrepo-main.png)
+![Screenshot](docs/llmwb-main.png)
 
 ## How is this different
 
