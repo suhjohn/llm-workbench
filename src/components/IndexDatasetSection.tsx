@@ -35,7 +35,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "./ui/select";
 import {
   Table,
@@ -434,20 +434,20 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                     </ContextMenuTrigger>
                     <ContextMenuContent>
                       <ContextMenuItem
-                        onClick={() =>
-                          handleRemoveColumns({ columns: [param] })
-                        }
-                        disabled={isPending}
-                        className="space-x-2 text-red-500"
-                      >
-                        <p>Delete column</p>
-                      </ContextMenuItem>
-                      <ContextMenuItem
                         onClick={() => setOpenAddColumnDialog(true)}
                         disabled={isPending}
                         className="space-x-2"
                       >
                         <p>Add column</p>
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onClick={() =>
+                          handleRemoveColumns({ columns: [param] })
+                        }
+                        disabled={isPending}
+                        className="space-x-2 text-red-500 hover:text-red-500 focus:text-red-500 dark:focus:text-red-500 dark:hover:text-red-500"
+                      >
+                        <p>Delete column</p>
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
