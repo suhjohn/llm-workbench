@@ -22,9 +22,10 @@ The application solves these specific user problems:
 - For a specific llm propmt, I want to test out different sets of prompt parameters, maybe happy case, or cases that I've seen fail somehow.
 - For a specific set of prompt parameters, I want to test out different llm prompts to do a vibe-check on their outputs.
 - (Providers seem to have different default parameters especially for open source models) I want to test the same prompt + model for different providers to understand their behavior
-- I want to run
+- I want to view the history of multiple runs for a specific set of parameter that I've provided. 
+- (Todo) Version control the prompts and datasets. 
 
-## Solution
+## Features
 
 1. Create "templates": messages / raw prompts that use `{{ }}` for denoting variables using Mustache.js.
 2. Create "datasets": Create a list of variables that you want to test the templates on.
