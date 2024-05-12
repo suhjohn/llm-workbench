@@ -2,6 +2,7 @@
 import { Resources } from "@/fixtures/resources";
 import { useCookieConfigContext } from "@/hooks/useCookieContext";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
+import { useProviders } from "@/hooks/useProviders";
 import { useResources } from "@/hooks/useResources";
 import {
   useDeleteTemplateDataset,
@@ -12,6 +13,8 @@ import { ChatMessage } from "@/types/chat";
 import { PromptTemplateType } from "@/types/prompt";
 import { json } from "@codemirror/lang-json";
 import { ChevronLeft, Trash2Icon } from "lucide-react";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useMemo } from "react";
@@ -60,7 +63,9 @@ export const TemplateSection: FC<TemplateSection> = ({
     messagesTemplate,
     enabledParameters,
   } = templateObj;
+  const { resolvedTheme } = useTheme();
   const { data: resources } = useResources();
+  const { data: providers } = useProviders();
   const { config, setConfig } = useCookieConfigContext();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -73,6 +78,22 @@ export const TemplateSection: FC<TemplateSection> = ({
   const getVariablesFromParameters = useGetVariablesCallback();
   const { data: templateDatasets } = useTemplateDatasets(templateObj.id);
   const { mutateAsync: deleteTemplateDataset } = useDeleteTemplateDataset();
+
+  const getResourceLogo = (resourceId: string) => {
+    if (providers === undefined) {
+      return "";
+    }
+    const resource = Resources.find((r) => r.id === resourceId);
+    if (resource === undefined) {
+      return "";
+    }
+    if (resolvedTheme === "dark") {
+      return (
+        providers.find((p) => p.id === resource.providerId)?.darkLogo || ""
+      );
+    }
+    return providers.find((p) => p.id === resource.providerId)?.logo || "";
+  };
 
   const promptParameters = useMemo(() => {
     try {
@@ -199,14 +220,22 @@ export const TemplateSection: FC<TemplateSection> = ({
           }}
         >
           <SelectTrigger className="w-full flex-shrink-0">
-            <SelectValue>
-              {selectedResource?.name || "Select a resource"}
-            </SelectValue>
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {Resources.map((resource) => (
               <SelectItem key={resource.id} value={resource.id}>
-                {resource.name}
+                <div className="flex space-x-2">
+                  <div className="relative w-[16px] h-[16px]">
+                    <Image
+                      src={getResourceLogo(resource.id)}
+                      alt={resource.name}
+                      fill
+                      objectFit="contain"
+                    />
+                  </div>
+                  <p>{resource.name}</p>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
