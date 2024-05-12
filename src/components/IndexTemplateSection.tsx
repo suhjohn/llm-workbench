@@ -357,8 +357,9 @@ export const TemplateSection: FC<TemplateSection> = ({
           <AccordionContent>
             <div className="w-full flex flex-col space-y-4">
               <p className="text-muted-foreground text-sm">
-                Connect datasets that are compatible with this template. This will allow you to
-                easily switch between different datasets applicable to this template.
+                Connect datasets that are compatible with this template. This
+                will allow you to easily switch between different datasets
+                applicable to this template and view the outputs.
               </p>
               <div
                 className={cn(
