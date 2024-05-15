@@ -189,6 +189,7 @@ export const useDatasetObjById = ({
   const { mutateAsync: callCreateRow } = useAddDatasetRow();
   const { mutateAsync: callDeleteRow } = useDeleteDatasetRow();
   const { mutateAsync: callAddColumns } = useAddDatasetColumns();
+  const { mutateAsync: callUpdateColumn } = useUpdateDatasetColumn();
   const { mutateAsync: callRemoveColumns } = useRemoveDatasetColumns();
   const { mutateAsync: callUpdateOutputField } = useUpdateOutputField();
   useEffect(() => {
@@ -308,6 +309,21 @@ export const useDatasetObjById = ({
       args: { index, outputField },
     });
   };
+
+  const updateColumn = async (index: number, column: string) => {
+    setDatasetObj((prev) => {
+      const parameterFields = [...prev.parameterFields];
+      parameterFields[index] = column;
+      return {
+        ...prev,
+        parameterFields,
+      };
+    });
+    await callUpdateColumn({
+      datasetId: datasetObj.datasetId,
+      args: { index, column },
+    });
+  };
   return {
     datasetObj,
     addColumns,
@@ -315,6 +331,7 @@ export const useDatasetObjById = ({
     createRow,
     deleteRow,
     removeColumns,
+    updateColumn,
     updateOutputField,
   };
 };
@@ -339,6 +356,34 @@ export const useAddDatasetColumns = () => {
       parsed.parameterFields = Array.from(
         new Set([...parsed.parameterFields, ...args.columns])
       );
+      await localForageStore.setItem(
+        `${getDatasetObjStorageKey(datasetId)}`,
+        parsed
+      );
+      queryClient.setQueryData([DATASET_OBJ_QUERY_KEY, { datasetId }], parsed);
+    },
+  });
+};
+
+export const useUpdateDatasetColumn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      datasetId,
+      args,
+    }: {
+      datasetId: string;
+      args: {
+        index: number;
+        column: string;
+      };
+    }) => {
+      const dataObj = await localForageStore.getItem<{
+        [x: string]: unknown;
+      }>(`${getDatasetObjStorageKey(datasetId)}`);
+      const parsed = DatasetDataSchema.parse(dataObj);
+      parsed.parameterFields[args.index] = args.column;
       await localForageStore.setItem(
         `${getDatasetObjStorageKey(datasetId)}`,
         parsed

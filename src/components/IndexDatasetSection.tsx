@@ -23,6 +23,7 @@ import { AddColumnDialogContent } from "./common/AddColumnDialog";
 import { ArrayInput } from "./common/ArrayInput";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
+import { UpdateColumnDialogContent } from "./common/UpdateColumnDialog";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import {
@@ -73,6 +74,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   const {
     datasetObj,
     addColumns,
+    updateColumn,
     removeColumns,
     updateOutputField,
     createRow,
@@ -109,6 +111,10 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   const { toast } = useToast();
   const { data: resources } = useResources();
   const [openAddColumnDialog, setOpenAddColumnDialog] = useState(false);
+  const [openUpdateColumnDialog, setOpenUpdateColumnDialog] = useState({
+    open: false,
+    index: -1,
+  });
   const [columnVisibility, setColumnVisibility] = useState<
     Record<keyof TableDatasetItemType, boolean>
   >({
@@ -412,7 +418,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 <TableHead className="w-20 min-w-20 flex-shrink-0">
                   <p className="text-sm text-muted-foreground">#</p>
                 </TableHead>
-                {datasetObj.parameterFields.map((param) => (
+                {datasetObj.parameterFields.map((param, index) => (
                   <ContextMenu key={param}>
                     <ContextMenuTrigger
                       asChild
@@ -442,6 +448,15 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         className="space-x-2"
                       >
                         <p>Add column</p>
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onClick={() =>
+                          setOpenUpdateColumnDialog({ open: true, index })
+                        }
+                        disabled={isPending}
+                        className="space-x-2"
+                      >
+                        <p>Rename column</p>
                       </ContextMenuItem>
                       <ContextMenuItem
                         onClick={() =>
@@ -728,6 +743,16 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
         setOpen={setOpenAddColumnDialog}
         onSubmit={(column) => {
           handleAddColumns({ columns: [column] });
+        }}
+      />
+      <UpdateColumnDialogContent
+        open={openUpdateColumnDialog.open}
+        setOpen={(open) => {
+          setOpenUpdateColumnDialog({ open, index: -1 });
+        }}
+        currentColumn={datasetObj.parameterFields[openUpdateColumnDialog.index]}
+        onSubmit={(column) => {
+          updateColumn(openUpdateColumnDialog.index, column);
         }}
       />
     </div>
