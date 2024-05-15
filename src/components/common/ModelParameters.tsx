@@ -26,18 +26,18 @@ import { CodeMirrorWithError } from "./CodeMirrorWithError";
 import { PromptParametersToolChoice } from "./PromptParametersToolChoice";
 import { AutoResizeTextareaWithError } from "./TextareaWithError";
 
-type PromptParametersProps = {
+type ModelParametersProps = {
   template: PromptTemplateType;
   setTemplate: (template: PromptTemplateType) => void;
 };
 
-export const PromptParameters: FC<PromptParametersProps> = ({
+export const ModelParameters: FC<ModelParametersProps> = ({
   template,
   setTemplate,
 }) => {
   const {
-    llmParameters: savedParameters,
-    enabledParameters,
+    modelParameters: savedParameters,
+    enabledModelParameters,
     resourceId,
   } = template;
   const resourceParameterSchema = ResourceParameterSchemaMap[resourceId];
@@ -47,7 +47,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
   const setParameters = (parameters: object) => {
     setTemplate({
       ...template,
-      llmParameters: parameters,
+      modelParameters: parameters,
     });
   };
 
@@ -57,8 +57,8 @@ export const PromptParameters: FC<PromptParametersProps> = ({
     defaultValue?: any
   ) => {
     if (checked) {
-      const dedupedEnabledParameters = Array.from(
-        new Set([...enabledParameters, key])
+      const dedupedenabledModelParameters = Array.from(
+        new Set([...enabledModelParameters, key])
       );
       const value =
         defaultValue !== undefined
@@ -68,16 +68,16 @@ export const PromptParameters: FC<PromptParametersProps> = ({
           : resourceParameterSchema[key].default;
       setTemplate({
         ...template,
-        llmParameters: {
+        modelParameters: {
           ...savedParameters,
           [key]: value,
         },
-        enabledParameters: dedupedEnabledParameters,
+        enabledModelParameters: dedupedenabledModelParameters,
       });
     } else {
       setTemplate({
         ...template,
-        enabledParameters: enabledParameters.filter((k) => k !== key),
+        enabledModelParameters: enabledModelParameters.filter((k) => k !== key),
       });
     }
   };
@@ -90,7 +90,7 @@ export const PromptParameters: FC<PromptParametersProps> = ({
 
         const parsedDefinition = ParameterInputSchema.parse(parameterSchema);
         const defaultValue = parsedDefinition.default;
-        const checked = enabledParameters.includes(typedKey);
+        const checked = enabledModelParameters.includes(typedKey);
         const value = savedParameters[typedKey] ?? defaultValue;
         return (
           <div className="flex space-x-4 flex-col" key={resourceParameter}>

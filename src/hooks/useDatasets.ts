@@ -84,6 +84,7 @@ export const useCreateDataset = () => {
         [DATASET_OBJ_QUERY_KEY, { datasetId: dataset.id }],
         datasetObj
       );
+      return dataset;
     },
   });
 };

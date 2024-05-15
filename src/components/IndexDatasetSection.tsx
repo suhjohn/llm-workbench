@@ -17,6 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ChevronLeft, Loader2, Play, Plus, Trash2Icon } from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { DatasetDropdownButton } from "./DatasetDropdownButton";
 import { IndexDatasetTemplateRunDialog } from "./IndexDatasetTemplateRunDialog";
 import { AddColumnDialogContent } from "./common/AddColumnDialog";
 import { ArrayInput } from "./common/ArrayInput";
@@ -89,10 +90,10 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   const getVariablesFromParameters = useGetVariablesCallback();
   const {
     resourceId,
-    llmParameters,
+    modelParameters,
     promptTemplate,
     messagesTemplate,
-    enabledParameters,
+    enabledModelParameters,
   } = template;
   const templatePromptParameters = useMemo(() => {
     try {
@@ -169,8 +170,8 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
 
   const getParsedArguments = useCallback(
     (promptParameters: Record<string, string>) => {
-      let params = enabledParameters.reduce((acc, key) => {
-        acc[key] = llmParameters[key];
+      let params = enabledModelParameters.reduce((acc, key) => {
+        acc[key] = modelParameters[key];
         return acc;
       }, {} as Record<string, any>);
       try {
@@ -195,8 +196,8 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
       return params;
     },
     [
-      enabledParameters,
-      llmParameters,
+      enabledModelParameters,
+      modelParameters,
       messagesTemplate,
       promptTemplate,
       completionType,
@@ -324,36 +325,12 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           }}
           parse={(value) => value}
         />
-        <div className="flex space-x-2">
-          {templateView === "detail" &&
-            !datasetTemplates?.some(
-              (datasetTemplate) => datasetTemplate.template.id === template.id
-            ) && (
-              <Button variant={"outline"} onClick={handleConnectTemplate}>
-                <p>Connect template</p>
-              </Button>
-            )}
-          <Button
-            onClick={() => runAllCompletions()}
-            disabled={datasetObj.data.length === 0 || isRunningAllCompletions}
-            className="space-x-2"
-          >
-            {isRunningAllCompletions && (
-              <Loader2 size={16} className="animate-spin" />
-            )}
-            {!isRunningAllCompletions && (
-              <>
-                <Play size={16} />
-                <p>Run</p>
-              </>
-            )}
-          </Button>
-        </div>
+        <DatasetDropdownButton dataset={dataset} />
       </div>
       <Card className="flex flex-col overflow-hidden h-full">
         <CardHeader className="h-auto p-2 border-b">
-          <div className="flex-col md:flex-row gap-2 flex justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="flex-col md:flex-row gap-2 flex justify-between overflow-auto">
+            <div className="flex flex-col md:flex-row gap-2 items-center">
               <Button
                 variant="outline"
                 className="w-full md:w-auto space-x-2"
@@ -362,7 +339,6 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 <Plus size={16} />
                 <p>Add row</p>
               </Button>
-
               <Button
                 variant="outline"
                 className="w-full md:w-auto space-x-2"
@@ -371,7 +347,6 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                 <Plus size={16} />
                 <p>Add column</p>
               </Button>
-
               {newPromptParametersExists && (
                 <Button
                   variant="outline"
@@ -380,36 +355,54 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                     handleAddColumns({ columns: templatePromptParameters })
                   }
                 >
-                  <p>Sync arguments</p>
+                  <p>Sync parameters</p>
                 </Button>
               )}
             </div>
-            <Select
-              value={template.id}
-              onValueChange={(value) => {
-                onClickTemplate(value);
-              }}
-            >
-              <SelectTrigger className="w-full md:w-auto md:max-w-96">
-                <SelectValue placeholder="Select a connected template">
-                  {datasetTemplates?.find(
-                    (datasetTemplate) =>
-                      datasetTemplate.template.id === template.id
-                  )?.template.name ?? "Select a connected template"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="w-full md:w-auto md:max-w-96">
-                {datasetTemplates?.map((datasetTemplate) => (
-                  <SelectItem
-                    key={datasetTemplate.template.id}
-                    value={datasetTemplate.template.id}
-                    className="whitespace-pre-wrap"
-                  >
-                    {datasetTemplate.template.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 flex-col md:flex-row">
+              {templateView === "detail" &&
+                !datasetTemplates?.some(
+                  (datasetTemplate) =>
+                    datasetTemplate.template.id === template.id
+                ) && (
+                  <Button variant={"outline"} onClick={handleConnectTemplate}>
+                    <p>Connect template</p>
+                  </Button>
+                )}
+              <Select
+                value={template.id}
+                onValueChange={(value) => {
+                  onClickTemplate(value);
+                }}
+              >
+                <SelectTrigger className="w-full md:w-auto md:max-w-96">
+                  <SelectValue placeholder="Select a connected template">
+                    {datasetTemplates?.find(
+                      (datasetTemplate) =>
+                        datasetTemplate.template.id === template.id
+                    )?.template.name ?? "Select a connected template"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="w-full md:w-auto md:max-w-96">
+                  {datasetTemplates?.length === 0 && (
+                    <div>
+                      <p className="text-muted-foreground text-xs p-2">
+                        No connected templates.
+                      </p>
+                    </div>
+                  )}
+                  {datasetTemplates?.map((datasetTemplate) => (
+                    <SelectItem
+                      key={datasetTemplate.template.id}
+                      value={datasetTemplate.template.id}
+                      className="whitespace-pre-wrap"
+                    >
+                      {datasetTemplate.template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col overflow-hidden h-full p-0">
@@ -684,14 +677,16 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                     </TableRow>
                   </ContextMenuTrigger>
                   <ContextMenuContent>
-                    <ContextMenuItem
-                      onClick={() => handleCreateCompletion(index)}
-                      disabled={isPending}
-                      className="space-x-2"
-                    >
-                      <Play size={16} />
-                      <p>Run</p>
-                    </ContextMenuItem>
+                    {templateView === "detail" && (
+                      <ContextMenuItem
+                        onClick={() => handleCreateCompletion(index)}
+                        disabled={isPending}
+                        className="space-x-2"
+                      >
+                        <Play size={16} />
+                        <p>Run</p>
+                      </ContextMenuItem>
+                    )}
                     <ContextMenuItem
                       onClick={() => deleteRow(index)}
                       className="space-x-2 text-red-500"
@@ -705,10 +700,27 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
             </TableBody>
           </Table>
         </CardContent>
-        <CardFooter className="bg-background w-full border-t flex items-center px-4 py-2">
+        <CardFooter className="bg-background w-full border-t flex items-center px-4 py-2 justify-between">
           <p className="text-sm text-muted-foreground">
             {datasetObj.data.length} items
           </p>
+          {templateView === "detail" && (
+            <Button
+              onClick={() => runAllCompletions()}
+              disabled={datasetObj.data.length === 0 || isRunningAllCompletions}
+              className="space-x-2"
+            >
+              {isRunningAllCompletions && (
+                <Loader2 size={16} className="animate-spin" />
+              )}
+              {!isRunningAllCompletions && (
+                <>
+                  <Play size={16} />
+                  <p>Run</p>
+                </>
+              )}
+            </Button>
+          )}
         </CardFooter>
       </Card>
       <AddColumnDialogContent

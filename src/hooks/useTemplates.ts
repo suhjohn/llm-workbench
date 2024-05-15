@@ -49,20 +49,16 @@ export const useCreateTemplate = () => {
         (await localForageStore.getItem<{
           [x: string]: unknown;
         }>(TEMPLATES_LOCAL_STORAGE_KEY)) ?? {};
-      const newTemplate = {
-        ...template,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
       await localForageStore.setItem(TEMPLATES_LOCAL_STORAGE_KEY, {
         ...templates,
-        [newTemplate.id]: newTemplate,
+        [template.id]: template,
       });
       const existingTemplates = queryClient.getQueryData([TEMPLATES_QUERY_KEY]);
       queryClient.setQueryData(
         [TEMPLATES_QUERY_KEY],
-        [newTemplate, ...(existingTemplates as PromptTemplateType[])]
+        [template, ...(existingTemplates as PromptTemplateType[])]
       );
+      return template;
     },
   });
 };

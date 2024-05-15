@@ -5,7 +5,7 @@ import {
   ParameterInputType,
 } from "./common";
 
-export type TogetherChatCompletionParameterType =
+export type TogetherChatCompletionRequestKeyType =
   | "model"
   | "max_tokens"
   | "stop"
@@ -24,8 +24,8 @@ export type TogetherChatCompletionParameterType =
   | "presence_penalty"
   | "min_p";
 
-export const TogetherChatCompletionPromptParametersSchema: Record<
-  TogetherChatCompletionParameterType,
+export const TogetherChatCompletionRequestSchema: Record<
+  TogetherChatCompletionRequestKeyType,
   ParameterInputType
 > = {
   model: {

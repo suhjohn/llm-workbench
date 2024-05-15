@@ -23,7 +23,7 @@ export const useCreateCompletion = () => {
       const resourceApiKey = localStorageKeys[selectedResource.providerId];
       if (!resourceApiKey) {
         throw new Error(
-          `API keys for resource ${selectedResource.id} not found`
+          `API keys for resource ${selectedResource.name} not found`
         );
       }
 

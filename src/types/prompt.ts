@@ -9,10 +9,10 @@ export const PromptTemplateSchema = z.object({
   id: z.string(),
   name: z.string(),
   resourceId: z.string(),
-  llmParameters: z.record(z.string(), z.any()),
+  modelParameters: z.record(z.string(), z.any()),
   promptTemplate: z.string(),
   messagesTemplate: z.array(ChatMessageSchema),
-  enabledParameters: z.array(
+  enabledModelParameters: z.array(
     z.enum(
       ResourceParameterKeys as [
         ResourceParameterKeyType,
@@ -44,7 +44,7 @@ export const DEFAULT_TEMPLATE: PromptTemplateType = {
   id: uuidv4(),
   name: "New template",
   resourceId: OpenAIChatCompletionResource.id,
-  llmParameters: {},
+  modelParameters: {},
   promptTemplate: "",
   messagesTemplate: [
     {
@@ -52,7 +52,7 @@ export const DEFAULT_TEMPLATE: PromptTemplateType = {
       content: "You are a helpful assistant.",
     },
   ],
-  enabledParameters: [],
+  enabledModelParameters: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

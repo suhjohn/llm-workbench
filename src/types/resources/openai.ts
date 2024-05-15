@@ -13,7 +13,7 @@ export const OpenAIChatCompletionToolChoiceObjectSchema = z.object({
   }),
 });
 
-export type OpenAIChatCompletionParameterType =
+export type OpenAIChatCompletionRequestKeyType =
   | "model"
   | "frequency_penalty"
   | "logit_bias"
@@ -30,8 +30,8 @@ export type OpenAIChatCompletionParameterType =
   | "tool_choice"
   | "user";
 
-export const OpenAIChatCompletionPromptParametersSchema: Record<
-  OpenAIChatCompletionParameterType,
+export const OpenAIChatCompletionRequestSchema: Record<
+  OpenAIChatCompletionRequestKeyType,
   ParameterInputType
 > = {
   model: {

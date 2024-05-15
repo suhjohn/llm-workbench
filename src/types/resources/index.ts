@@ -2,21 +2,21 @@ import {
   OpenAIChatCompletionResource,
   TogetherChatCompletionResource,
 } from "@/fixtures/resources";
-import { OpenAIChatCompletionPromptParametersSchema } from "./openai";
-import { TogetherChatCompletionPromptParametersSchema } from "./together";
+import { OpenAIChatCompletionRequestSchema } from "./openai";
+import { TogetherChatCompletionRequestSchema } from "./together";
 
 export type ResourceParameterKeyType =
-  keyof typeof OpenAIChatCompletionPromptParametersSchema &
-    keyof typeof TogetherChatCompletionPromptParametersSchema;
+  keyof typeof OpenAIChatCompletionRequestSchema &
+    keyof typeof TogetherChatCompletionRequestSchema;
 
 export const ResourceParameterKeys: ResourceParameterKeyType[] = Object.keys(
-  OpenAIChatCompletionPromptParametersSchema
+  OpenAIChatCompletionRequestSchema
 ).concat(
-  Object.keys(TogetherChatCompletionPromptParametersSchema)
+  Object.keys(TogetherChatCompletionRequestSchema)
 ) as ResourceParameterKeyType[];
 
 export const ResourceParameterSchemaMap = {
-  [OpenAIChatCompletionResource.id]: OpenAIChatCompletionPromptParametersSchema,
+  [OpenAIChatCompletionResource.id]: OpenAIChatCompletionRequestSchema,
   [TogetherChatCompletionResource.id]:
-    TogetherChatCompletionPromptParametersSchema,
+    TogetherChatCompletionRequestSchema,
 };

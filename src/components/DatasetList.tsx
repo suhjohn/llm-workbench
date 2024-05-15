@@ -3,29 +3,24 @@ import {
   useDatasets,
   useDeleteDataset,
 } from "@/hooks/useDatasets";
-import { formatAppleDate } from "@/lib/formatDate";
+import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
+import { useNavigateToNewParams } from "@/hooks/useNavigation";
+import { formatAbsoluteDate, formatAppleDate } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 import { DEFAULT_DATASET } from "@/types/dataset";
-import { Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2, Plus } from "lucide-react";
 import { FC, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { DatasetDropdownButton } from "./DatasetDropdownButton";
 import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 
 type DatasetListProps = {
   onClickDataset: (id: string) => void;
 };
 
 export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedDatasetId = searchParams.get("datasetId");
+  const { selectedDatasetId } = useIndexSearchParams();
+  const { navigateToNewParams } = useNavigateToNewParams();
   const [openMoreActionIndex, setOpenMoreActionIndex] = useState<string | null>(
     null
   );
@@ -33,24 +28,27 @@ export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
   const { mutateAsync: createDataset } = useCreateDataset();
   const { mutateAsync: deleteDataset } = useDeleteDataset();
   const handleCreateDataset = async () => {
-    await createDataset({
+    const now = new Date();
+    const dataset = await createDataset({
       ...DEFAULT_DATASET,
       id: uuidv4(),
-      name: "New Dataset",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      name: `New Dataset - ${formatAbsoluteDate(now)}`,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    });
+    navigateToNewParams({
+      datasetId: dataset.id,
+      datasetView: "detail",
     });
   };
   const handleDeleteDataset = async (id: string) => {
     await deleteDataset(id);
-    const newSearchParams = new URLSearchParams();
-    searchParams.forEach((value, key) => {
-      if (key !== "datasetId") {
-        newSearchParams.set(key, value);
-      }
-    });
-    if (selectedDatasetId === id)
-      router.push(`/?${newSearchParams.toString()}`);
+    if (selectedDatasetId === id) {
+      navigateToNewParams({
+        datasetId: null,
+        datasetView: "list",
+      });
+    }
   };
   return (
     <div className="w-full h-full flex flex-col overflow-auto">
@@ -74,17 +72,32 @@ export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
           )
           .map((dataset) => {
             return (
-              <Button
+              <div
                 key={dataset.id}
-                variant="ghost"
                 className={cn(
+                  "inline-flex",
+                  "items-center",
+                  "justify-center",
+                  "whitespace-nowrap",
+                  "rounded-md",
+                  "text-sm",
+                  "font-medium",
+                  "ring-offset-background",
+                  "transition-colors",
+                  "focus-visible:outline-1",
+                  "focus-visible:outline-blue-500",
+                  "disabled:pointer-events-none",
+                  "disabled:opacity-50",
                   "justify-between",
                   "px-2",
-                  "h-10",
+                  "py-1",
+                  "min-h-10",
                   "flex",
                   "flex-shrink-0",
                   "text-left",
-                  "items-center"
+                  "items-center",
+                  "hover:text-accent hover:bg-accent hover:text-accent-foreground aria-selected:bg-accent/90",
+                  "cursor-pointer"
                 )}
                 aria-selected={selectedDatasetId === dataset.id}
                 onClick={() => {
@@ -98,41 +111,9 @@ export const DatasetList: FC<DatasetListProps> = ({ onClickDataset }) => {
                   <p className="text-xs text-muted-foreground">
                     {formatAppleDate(new Date(dataset.createdAt))}
                   </p>
-                  <DropdownMenu
-                    open={openMoreActionIndex === dataset.id}
-                    onOpenChange={(isOpen) => {
-                      if (!isOpen) {
-                        setOpenMoreActionIndex(null);
-                      }
-                    }}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        className="px-0 py-0 h-auto p-1"
-                        variant="secondary"
-                        onClick={(e) => {
-                          setOpenMoreActionIndex(dataset.id);
-                          e.stopPropagation();
-                        }}
-                      >
-                        <MoreHorizontal size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuItem
-                        className="space-x-2 text-red-500"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteDataset(dataset.id);
-                        }}
-                      >
-                        <Trash size={16} />
-                        <p>Delete</p>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <DatasetDropdownButton dataset={dataset} />
                 </div>
-              </Button>
+              </div>
             );
           })}
     </div>

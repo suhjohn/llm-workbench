@@ -1,69 +1,37 @@
-import {
-  useCreateTemplate,
-  useDeleteTemplate,
-  useTemplates,
-} from "@/hooks/useTemplates";
-import { formatAppleDate } from "@/lib/formatDate";
+import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
+import { useNavigateToNewParams } from "@/hooks/useNavigation";
+import { useCreateTemplate, useTemplates } from "@/hooks/useTemplates";
+import { formatAbsoluteDate, formatAppleDate } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 import { DEFAULT_TEMPLATE } from "@/types/prompt";
-import { Copy, Loader2, MoreHorizontal, Plus, Trash } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FC, useState } from "react";
+import { Loader2, Plus } from "lucide-react";
+import { FC } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { TemplateDropdownButton } from "./TemplateDropdownButton";
 import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 
 type TemplateListProps = {
   onClickTemplate: (id: string) => void;
 };
 
 export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedTemplateId = searchParams.get("templateId");
-  const [openMoreActionIndex, setOpenMoreActionIndex] = useState<string | null>(
-    null
-  );
+  const { selectedTemplateId } = useIndexSearchParams();
+  const { navigateToNewParams } = useNavigateToNewParams();
   const { data: templates, isLoading } = useTemplates();
   const { mutateAsync: createTemplate } = useCreateTemplate();
-  const { mutateAsync: deleteTemplate } = useDeleteTemplate();
   const handleCreateTemplate = async () => {
-    await createTemplate({
+    const now = new Date();
+    const newTemplate = await createTemplate({
       ...DEFAULT_TEMPLATE,
       id: uuidv4(),
-      name: "New Template",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      name: `New template - ${formatAbsoluteDate(now)}`,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     });
-  };
-
-  const handleCopyTemplate = async (id: string) => {
-    const template = templates?.find((template) => template.id === id);
-    if (!template) return;
-    await createTemplate({
-      ...template,
-      id: uuidv4(),
-      name: `${template.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    navigateToNewParams({
+      templateId: newTemplate.id,
+      templateView: "detail",
     });
-  };
-
-  const handleDeleteTemplate = async (id: string) => {
-    const newSearchParams = new URLSearchParams();
-    searchParams.forEach((value, key) => {
-      if (key !== "templateId") {
-        newSearchParams.set(key, value);
-      }
-    });
-    await deleteTemplate(id);
-    if (selectedTemplateId === id)
-      router.push(`/?${newSearchParams.toString()}`);
   };
 
   return (
@@ -129,45 +97,7 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               <p className="text-xs text-muted-foreground">
                 {formatAppleDate(new Date(template.createdAt))}
               </p>
-              <DropdownMenu
-                open={openMoreActionIndex === template.id}
-                onOpenChange={(isOpen) => {
-                  if (!isOpen) {
-                    setOpenMoreActionIndex(null);
-                  }
-                }}
-              >
-                <DropdownMenuTrigger
-                  onClick={(e) => {
-                    setOpenMoreActionIndex(template.id);
-                    e.stopPropagation();
-                  }}
-                >
-                  <MoreHorizontal size={16} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    className="space-x-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCopyTemplate(template.id);
-                    }}
-                  >
-                    <Copy size={16} />
-                    <p>Copy</p>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="space-x-2 text-red-500"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTemplate(template.id);
-                    }}
-                  >
-                    <Trash size={16} />
-                    <p>Delete</p>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <TemplateDropdownButton template={template} />
             </div>
           </div>
         );

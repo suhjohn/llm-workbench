@@ -15,13 +15,12 @@ import { json } from "@codemirror/lang-json";
 import { ChevronLeft, Trash2Icon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useMemo } from "react";
 import { ClickableInput } from "./common/ClickableInput";
 import { CodeMirrorWithError } from "./common/CodeMirrorWithError";
+import { ModelParameters } from "./common/ModelParameters";
 import { PromptInput } from "./common/PromptInput";
-import { PromptParameters } from "./common/PromptParameters";
 import {
   Accordion,
   AccordionContent,
@@ -30,7 +29,6 @@ import {
 } from "./ui/accordion";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader } from "./ui/card";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -39,8 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Skeleton } from "./ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { TemplateDropdownButton } from "./TemplateDropdownButton";
 
 type TemplateSection = {
   isLoadingTemplate: boolean;
@@ -58,10 +56,10 @@ export const TemplateSection: FC<TemplateSection> = ({
   const {
     name: templateName,
     resourceId,
-    llmParameters,
+    modelParameters,
     promptTemplate,
     messagesTemplate,
-    enabledParameters,
+    enabledModelParameters,
   } = templateObj;
   const { resolvedTheme } = useTheme();
   const { data: resources } = useResources();
@@ -69,8 +67,8 @@ export const TemplateSection: FC<TemplateSection> = ({
   const { config, setConfig } = useCookieConfigContext();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedParameters = enabledParameters.reduce((acc, key) => {
-    acc[key] = llmParameters[key];
+  const selectedModelParameters = enabledModelParameters.reduce((acc, key) => {
+    acc[key] = modelParameters[key];
     return acc;
   }, {} as Record<string, any>);
   const selectedResource = resources.find((r) => r.id === resourceId);
@@ -119,7 +117,7 @@ export const TemplateSection: FC<TemplateSection> = ({
       if (e instanceof Error) {
         return e.message;
       }
-      return "Error while setting prompt arguments";
+      return "Error while setting prompt parameters";
     }
   }, [getVariablesFromParameters, promptTemplate, messagesTemplate]);
 
@@ -149,6 +147,23 @@ export const TemplateSection: FC<TemplateSection> = ({
     router.push(`/?${newSearchParams.toString()}`);
   };
 
+  const handleSelectResource = (resourceId: string) => {
+    if (resourceId === templateObj.resourceId) {
+      return;
+    }
+    const modelParametersWithoutModel = {
+      ...modelParameters,
+    };
+    if (modelParametersWithoutModel.model !== undefined) {
+      delete modelParametersWithoutModel.model;
+    }
+    setTemplate({
+      ...templateObj,
+      modelParameters: modelParametersWithoutModel,
+      resourceId,
+    });
+  };
+
   return (
     <div className="flex w-full flex-col space-y-2 h-full overflow-auto">
       <div className="flex justify-between flex-col md:flex-row gap-2">
@@ -172,52 +187,10 @@ export const TemplateSection: FC<TemplateSection> = ({
             }}
             parse={(value) => value}
           />
+          <TemplateDropdownButton template={templateObj} />
         </div>
       </div>
-      <Card>
-        <CardHeader>
-          <Label>Metadata</Label>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div>
-            <Label>Id</Label>
-            {isLoadingTemplate ? (
-              <Skeleton className="h-4 w-full" />
-            ) : (
-              <p className={cn("text-xs")}>{templateObj.id}</p>
-            )}
-          </div>
-          <div>
-            <Label>Created</Label>
-            {isLoadingTemplate ? (
-              <Skeleton className="h-4 w-full" />
-            ) : (
-              <p className={cn("text-xs")}>
-                {new Date(templateObj.createdAt).toLocaleString()}
-              </p>
-            )}
-          </div>
-          <div>
-            <Label>Updated</Label>
-            {isLoadingTemplate ? (
-              <Skeleton className="h-4 w-full" />
-            ) : (
-              <p className={cn("text-xs")}>
-                {new Date(templateObj.updatedAt).toLocaleString()}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-      <Select
-        value={resourceId}
-        onValueChange={(value) => {
-          setTemplate({
-            ...templateObj,
-            resourceId: value,
-          });
-        }}
-      >
+      <Select value={resourceId} onValueChange={handleSelectResource}>
         <SelectTrigger className="w-full">
           <SelectValue />
         </SelectTrigger>
@@ -262,18 +235,8 @@ export const TemplateSection: FC<TemplateSection> = ({
             <div className="flex flex-col gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Use mustache syntax to define prompt arguments. e.g.
+                  Use mustache syntax to define parameters for the prompt. e.g.
                   {"Respond to the user's message: {{ user_input }}"}
-                </p>
-                <p className="text-sm">
-                  <span className="text-muted-foreground">{`Learn more at: `}</span>
-                  <Link
-                    href="https://github.com/janl/mustache.js"
-                    className="text-blue-500 hover:underline"
-                    target="_blank"
-                  >
-                    https://github.com/janl/mustache.js
-                  </Link>
                 </p>
               </div>
               <div className="flex flex-col gap-2">
@@ -304,7 +267,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                   {promptParametersError === undefined && (
                     <>
                       <span className="text-muted-foreground text-sm">
-                        Prompt arguments:
+                        Prompt parameters:
                       </span>
                       {promptParameters.length === 0 && (
                         <span className="italic text-muted-foreground text-sm">
@@ -334,7 +297,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                 <TabsTrigger value="json">JSON</TabsTrigger>
               </TabsList>
               <TabsContent value="ui">
-                <PromptParameters
+                <ModelParameters
                   template={templateObj}
                   setTemplate={setTemplate}
                 />
@@ -343,7 +306,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                 <CodeMirrorWithError
                   readOnly={true}
                   className="w-full"
-                  value={JSON.stringify(selectedParameters, null, 2)}
+                  value={JSON.stringify(selectedModelParameters, null, 2)}
                   extensions={[json()]}
                 />
               </TabsContent>
