@@ -271,7 +271,7 @@ export const TemplateSection: FC<TemplateSection> = ({
                       </span>
                       {promptParameters.length === 0 && (
                         <span className="italic text-muted-foreground text-sm">
-                          No arguments found.
+                          No parameters found.
                         </span>
                       )}
                       {promptParameters.map((parameter) => (

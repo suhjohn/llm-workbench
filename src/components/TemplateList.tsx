@@ -1,3 +1,4 @@
+import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
 import { useNavigateToNewParams } from "@/hooks/useNavigation";
 import { useCreateTemplate, useTemplates } from "@/hooks/useTemplates";
@@ -8,6 +9,7 @@ import { Loader2, Plus } from "lucide-react";
 import { FC } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TemplateDropdownButton } from "./TemplateDropdownButton";
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
 type TemplateListProps = {
@@ -19,6 +21,7 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
   const { navigateToNewParams } = useNavigateToNewParams();
   const { data: templates, isLoading } = useTemplates();
   const { mutateAsync: createTemplate } = useCreateTemplate();
+  const getVariablesFromParameters = useGetVariablesCallback();
   const handleCreateTemplate = async () => {
     const now = new Date();
     const newTemplate = await createTemplate({
@@ -52,12 +55,16 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
         </div>
       )}
       {templates?.map((template) => {
+        const promptParameters = getVariablesFromParameters({
+          messagesTemplate: template.messagesTemplate,
+          promptTemplate: template.promptTemplate,
+          parser: "mustache",
+        });
         return (
           <div
             key={template.id}
             className={cn(
               "inline-flex",
-              "items-center",
               "justify-center",
               "whitespace-nowrap",
               "rounded-md",
@@ -74,9 +81,9 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               "py-1",
               "min-h-10",
               "flex",
+              "flex-col",
               "flex-shrink-0",
               "text-left",
-              "items-center",
               "hover:text-accent hover:bg-accent hover:text-accent-foreground aria-selected:bg-accent/90",
               "cursor-pointer"
             )}
@@ -85,19 +92,33 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               onClickTemplate(template.id);
             }}
           >
-            <p
-              className={cn(
-                "text-left justify-start px-0 text-color-primary",
-                "whitespace-pre-wrap"
-              )}
-            >
-              {template.name}
-            </p>
-            <div className="flex space-x-4 items-center">
-              <p className="text-xs text-muted-foreground">
-                {formatAppleDate(new Date(template.createdAt))}
+            <div className="w-full flex justify-between items-center">
+              <p
+                className={cn(
+                  "text-left justify-start px-0 text-color-primary",
+                  "whitespace-pre-wrap"
+                )}
+              >
+                {template.name}
               </p>
-              <TemplateDropdownButton template={template} />
+              <div className="flex space-x-4 items-center">
+                <p className="text-xs text-muted-foreground">
+                  {formatAppleDate(new Date(template.createdAt))}
+                </p>
+                <TemplateDropdownButton template={template} />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {promptParameters.length === 0 && (
+                <span className="italic text-muted-foreground text-xs">
+                  No parameters found.
+                </span>
+              )}
+              {promptParameters.map((parameter) => (
+                <Badge key={parameter} variant={"secondary"}>
+                  {parameter}
+                </Badge>
+              ))}
             </div>
           </div>
         );
