@@ -463,7 +463,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         disabled={isPending}
                         className="space-x-2"
                       >
-                        <p>Add column</p>
+                        <p>Add column on right</p>
                       </ContextMenuItem>
                       <ContextMenuItem
                         onClick={() =>
