@@ -20,11 +20,12 @@ export const APIKeysDialog = () => {
   const { data: providers } = useProviders();
   const [apiKeys, setApiKeys] = useState<{ [x: string]: string }>({});
   const [saved, setSaved] = useState(false);
-  const { data: localStorageKeys } = useKeys();
-  const handleSetApiKeys = (apiKeys: { [x: string]: string }) => {
-    localForageStore.setItem(KEYS_LOCAL_STORAGE_KEY, apiKeys);
+  const { data: localStorageKeys, refetch } = useKeys();
+  const handleSetApiKeys = async (apiKeys: { [x: string]: string }) => {
+    await localForageStore.setItem(KEYS_LOCAL_STORAGE_KEY, apiKeys);
     setApiKeys(apiKeys);
     setSaved(true);
+    await refetch();
   };
   useEffect(() => {
     if (localStorageKeys !== undefined) {
