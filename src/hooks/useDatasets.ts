@@ -383,6 +383,17 @@ export const useUpdateDatasetColumn = () => {
         [x: string]: unknown;
       }>(`${getDatasetObjStorageKey(datasetId)}`);
       const parsed = DatasetDataSchema.parse(dataObj);
+      parsed.data = parsed.data.map((row) => {
+        const newArguments = { ...row.arguments };
+        const oldColumn = parsed.parameterFields[args.index];
+        const newColumn = args.column;
+        newArguments[newColumn] = newArguments[oldColumn];
+        delete newArguments[oldColumn];
+        return {
+          id: row.id,
+          arguments: newArguments,
+        };
+      });
       parsed.parameterFields[args.index] = args.column;
       await localForageStore.setItem(
         `${getDatasetObjStorageKey(datasetId)}`,
