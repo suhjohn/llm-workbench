@@ -4,17 +4,26 @@ import { useDatasetObjById } from "@/hooks/useDatasets";
 import { useGetVariablesCallback } from "@/hooks/useGetVariables";
 import { useIndexSearchParams } from "@/hooks/useIndexSearchParams";
 import { useResources } from "@/hooks/useResources";
+import { useRunConfig } from "@/hooks/useRunConfig";
 import {
   useCreateTemplateDataset,
   useDatasetTemplates,
 } from "@/hooks/useTemplates";
 import { compile } from "@/lib/parser";
+import { Semaphore } from "@/lib/semaphore";
 import { cn, getNestedValue } from "@/lib/utils";
 import { DatasetType, OutputFieldType } from "@/types/dataset";
 import { JsonValue } from "@/types/json";
 import { PromptTemplateType } from "@/types/prompt";
 import { useMutation } from "@tanstack/react-query";
-import { ChevronLeft, Loader2, Play, Plus, Trash2Icon } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Loader2,
+  Play,
+  Plus,
+  Trash2Icon,
+} from "lucide-react";
 import { FC, useCallback, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { DatasetDropdownButton } from "./DatasetDropdownButton";
@@ -23,6 +32,7 @@ import { AddColumnDialogContent } from "./common/AddColumnDialog";
 import { ArrayInput } from "./common/ArrayInput";
 import { ClickableInput } from "./common/ClickableInput";
 import { ClickableTextarea } from "./common/ClickableTextarea";
+import { RunConfigDialog } from "./common/RunConfigDialog";
 import { UpdateColumnDialogContent } from "./common/UpdateColumnDialog";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
@@ -85,6 +95,9 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   });
   const { data: datasetTemplates } = useDatasetTemplates(dataset.id);
   const { mutateAsync: createDatasetRun } = useCreateDatasetRun();
+  const [openRunConfig, setOpenRunConfig] = useState(false);
+  const { data: runConfig } = useRunConfig();
+
   const { data: datasetRunMap } = useDatasetRuns({
     datasetId: dataset.id,
     templateId: template.id,
@@ -255,9 +268,12 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   const { mutateAsync: runAllCompletions, isPending: isRunningAllCompletions } =
     useMutation({
       mutationFn: async () => {
+        const semaphore = new Semaphore(runConfig?.parallelism ?? 5);
+        const tasks = [];
         for (let i = 0; i < datasetObj.data.length; i++) {
-          await handleCreateCompletion(i);
+          tasks.push(semaphore.enqueue(() => handleCreateCompletion(i)));
         }
+        await Promise.all(tasks);
       },
     });
 
@@ -720,21 +736,39 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
             {datasetObj.data.length} items
           </p>
           {templateView === "detail" && (
-            <Button
-              onClick={() => runAllCompletions()}
-              disabled={datasetObj.data.length === 0 || isRunningAllCompletions}
-              className="space-x-2"
-            >
-              {isRunningAllCompletions && (
-                <Loader2 size={16} className="animate-spin" />
-              )}
+            <div className="flex items-center rounded-md space-x-0 overflow-hidden">
+              <Button
+                onClick={() => runAllCompletions()}
+                disabled={
+                  datasetObj.data.length === 0 || isRunningAllCompletions
+                }
+                className={cn(
+                  "space-x-2",
+                  "rounded-none",
+                  isRunningAllCompletions ? "p-2" : "p-0"
+                )}
+              >
+                {isRunningAllCompletions && (
+                  <Loader2 size={16} className="animate-spin" />
+                )}
+                {!isRunningAllCompletions && (
+                  <div className="flex space-x-2 px-2">
+                    <div className="px-2 flex space-x-2 items-center">
+                      <Play size={16} />
+                      <p>Run</p>
+                    </div>
+                  </div>
+                )}
+              </Button>
               {!isRunningAllCompletions && (
-                <>
-                  <Play size={16} />
-                  <p>Run</p>
-                </>
+                <Button
+                  className="border-l border-l-white rounded-none px-2 flex items-center"
+                  onClick={() => setOpenRunConfig(true)}
+                >
+                  <ChevronDown size={16} />
+                </Button>
               )}
-            </Button>
+            </div>
           )}
         </CardFooter>
       </Card>
@@ -755,6 +789,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
           updateColumn(openUpdateColumnDialog.index, column);
         }}
       />
+      <RunConfigDialog open={openRunConfig} setOpen={setOpenRunConfig} />
     </div>
   );
 };
