@@ -117,6 +117,10 @@ export const useDeleteTemplate = () => {
         (await localForageStore.getItem<{
           [x: string]: unknown;
         }>(TEMPLATES_LOCAL_STORAGE_KEY)) ?? {};
+      const template = templates[id] as PromptTemplateType | undefined;
+      const templateDatasets = queryClient.getQueryData(
+        getTemplateDatasetsQueryKey(id)
+      ) as PromptTemplateDatasetType[] | undefined;
       delete templates[id];
       await localForageStore.setItem(TEMPLATES_LOCAL_STORAGE_KEY, templates);
       queryClient.setQueryData(
@@ -145,6 +149,28 @@ export const useDeleteTemplate = () => {
       await localForageStore.setItem(
         getTemplateDatasetsLocalStorageKey(),
         newTemplateDatasetsTable
+      );
+
+      templateDatasets?.forEach(
+        (templateDataset: PromptTemplateDatasetType) => {
+          const datasetTemplates = queryClient.getQueryData(
+            getDatasetTemplatesQueryKey(templateDataset.datasetId)
+          ) as PromptTemplateDatasetType[] | undefined;
+          if (!datasetTemplates) {
+            return;
+          }
+          queryClient.setQueryData(
+            getDatasetTemplatesQueryKey(templateDataset.datasetId),
+            datasetTemplates
+              .map((datasetTemplate) => {
+                if (datasetTemplate.promptTemplateId === id) {
+                  return undefined;
+                }
+                return datasetTemplate;
+              })
+              .filter(Boolean)
+          );
+        }
       );
     },
   });
