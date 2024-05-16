@@ -11,7 +11,6 @@ import { DEFAULT_DATASET, DatasetType } from "@/types/dataset";
 import { DEFAULT_TEMPLATE, PromptTemplateType } from "@/types/prompt";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { DatasetList } from "./DatasetList";
 import { DatasetSection } from "./IndexDatasetSection";
 import { TemplateSection } from "./IndexTemplateSection";
@@ -30,15 +29,9 @@ export default function IndexPage() {
   const [isRendered, setIsRendered] = useState(false);
   const [template, setTemplate] = useState<PromptTemplateType>({
     ...DEFAULT_TEMPLATE,
-    id: uuidv4(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   });
   const [dataset, setDataset] = useState<DatasetType>({
     ...DEFAULT_DATASET,
-    id: uuidv4(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   });
   const { data: templates } = useTemplates();
   const { data: datasets } = useDatasets();
@@ -55,6 +48,10 @@ export default function IndexPage() {
 
   useEffect(() => {
     if (selectedTemplateId === template.id) {
+      return;
+    }
+    if (selectedTemplateId === null) {
+      setTemplate(DEFAULT_TEMPLATE);
       return;
     }
     if (templatesMap !== undefined && selectedTemplateId !== null) {
@@ -89,6 +86,7 @@ export default function IndexPage() {
   };
 
   const handleClickBackTemplate = () => {
+    setTemplate(DEFAULT_TEMPLATE);
     navigateToNewParams({ templateView: "list", templateId: null });
   };
 
@@ -110,7 +108,6 @@ export default function IndexPage() {
     templateView === "detail" &&
     selectedTemplateId !== null &&
     selectedTemplateId !== template.id;
-
   return (
     <div className={"flex relative flex-col space-y-0 md:h-[100dvh] w-[100vw]"}>
       <TopNavigation />
