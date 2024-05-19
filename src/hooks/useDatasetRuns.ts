@@ -55,7 +55,7 @@ export const useDatasetRuns = ({
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0];
-      });
+      }).filter(Boolean);
       return Object.fromEntries(rows.map((row) => [row.datasetRowId, row]));
     },
   });

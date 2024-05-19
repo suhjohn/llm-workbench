@@ -463,7 +463,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         disabled={isPending}
                         className="space-x-2"
                       >
-                        <p>Add column on right</p>
+                        <p>Add column right</p>
                       </ContextMenuItem>
                       <ContextMenuItem
                         onClick={() =>
@@ -490,7 +490,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                   <>
                     {/* Vertical divider */}
                     {datasetObj.parameterFields.length > 0 && (
-                      <TableHead className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableHead>
+                      <TableHead className="border-r border-gray-500 dark:border-gray-400 px-0"></TableHead>
                     )}
                     {columnVisibility.compiledInput === true && (
                       <TableHead className="min-w-96">Compiled Input</TableHead>
@@ -604,7 +604,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
                         <>
                           {/* Vertical divider */}
                           {datasetObj.parameterFields.length > 0 && (
-                            <TableCell className="border-x border-gray-500 dark:border-gray-400 px-0.5"></TableCell>
+                            <TableCell className="border-r border-gray-500 dark:border-gray-400 w-[1px] px-0"></TableCell>
                           )}
                           {columnVisibility.compiledInput === true && (
                             <TableCell

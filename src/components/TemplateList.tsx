@@ -78,7 +78,7 @@ export const TemplateList: FC<TemplateListProps> = ({ onClickTemplate }) => {
               "disabled:opacity-50",
               "justify-between",
               "px-2",
-              "py-1",
+              "py-2",
               "min-h-10",
               "flex",
               "flex-col",
