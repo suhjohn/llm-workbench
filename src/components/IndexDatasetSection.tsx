@@ -188,7 +188,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
   };
 
   const getParsedArguments = useCallback(
-    (promptParameters: Record<string, string>) => {
+    (promptParameters: Record<string, any>) => {
       let params = enabledModelParameters.reduce((acc, key) => {
         acc[key] = modelParameters[key];
         return acc;
@@ -307,7 +307,7 @@ export const DatasetSection: FC<DatasetSectionProps> = ({
 
   const handleUpdateRow = async (
     index: number,
-    updatedData: Record<string, string>
+    updatedData: Record<string, any>
   ) => {
     try {
       await updateRow(index, updatedData);

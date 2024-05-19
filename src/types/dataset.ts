@@ -20,7 +20,7 @@ export type OutputFieldType = z.infer<typeof OutputFieldSchema>;
 
 export const DatasetDataRowSchema = z.object({
   id: z.string(),
-  arguments: z.record(z.string(), z.string()),
+  arguments: z.record(z.string(), z.string().nullish()),
 });
 
 export const DatasetDataSchema = z.object({

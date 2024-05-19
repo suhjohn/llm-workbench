@@ -213,7 +213,7 @@ export const useDatasetObjById = ({
     }
   }, [datasetId, datasetData]);
 
-  const updateRow = async (index: number, args: Record<string, string>) => {
+  const updateRow = async (index: number, args: Record<string, any>) => {
     setDatasetObj((prev) => {
       const data = [...prev.data];
       data[index] = {
@@ -458,6 +458,7 @@ export const useAddDatasetRow = () => {
       const dataObj = await localForageStore.getItem<{
         [x: string]: unknown;
       }>(`${getDatasetObjStorageKey(datasetId)}`);
+      console.log(dataObj);
       const parsed = DatasetDataSchema.parse(dataObj);
       parsed.data.push({
         id: uuidv4(),
