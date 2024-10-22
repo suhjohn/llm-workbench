@@ -1,3 +1,5 @@
+Refer to https://neosheets.com (https://github.com/suhjohn/neosheets) for the v2 version of this idea. 
+
 # LLM Workbench
 
 https://www.llmwb.com/
