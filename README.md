@@ -1,4 +1,4 @@
-Refer to https://neosheets.com (https://github.com/suhjohn/neosheets) for the v2 version of this idea. 
+Refer to https://neosheets.com (https://github.com/suhjohn/neosheets) for the v2 of this idea. 
 
 # LLM Workbench
 
